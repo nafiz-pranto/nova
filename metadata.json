@@ -1,0 +1,6 @@
+{
+  "name": "Nova",
+  "description": "Research advertisers from public Meta Ad Library information and organize the results into actionable lead records.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
