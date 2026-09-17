@@ -3,8 +3,7 @@ import re
 with open('src/utils/researchWorkflowRunner.ts', 'r') as f:
     content = f.read()
 
-new_logic = """
-  public static async executeRun(
+new_logic = """  public static async executeRun(
     request: ResearchWorkflowRequest,
     onProgress?: (event: WorkflowProgressEvent) => void
   ): Promise<ResearchExecutionResult> {
@@ -50,16 +49,15 @@ new_logic = """
     
     if (!result) throw new Error("Failed to receive final result from server.");
     return result;
-  }
-"""
+  }"""
 
-content = re.sub(
-    r'  public static async executeRun\(.*?  \}: Promise<ResearchExecutionResult> \{.*?(?=\n\s*\})',
-    new_logic,
-    content,
-    flags=re.DOTALL
-)
-
+# We just want to replace the `public static async executeRun( ... ) { ... }` function body.
+start_idx = content.find("public static async executeRun(")
+if start_idx != -1:
+    # find the end of the class, it's the last closing brace
+    # Actually, we can just cut from start_idx to the end, and then add closing brace
+    content = content[:start_idx] + new_logic + "\n}\n"
+    
 with open('src/utils/researchWorkflowRunner.ts', 'w') as f:
     f.write(content)
 

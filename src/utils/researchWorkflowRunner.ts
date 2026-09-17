@@ -366,298 +366,51 @@ export class ResearchWorkflowRunner {
    * Executes an end-to-end research collection run against public Meta Ad Library data
    * and verifies and qualifies discovered leads.
    */
-  public static async executeRun(
+    public static async executeRun(
     request: ResearchWorkflowRequest,
     onProgress?: (event: WorkflowProgressEvent) => void
   ): Promise<ResearchExecutionResult> {
-    const startTime = Date.now();
-    const jobId = `job_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
-    const batchId = `batch_${Date.now().toString(36)}`;
-
-    // 1. Location Validation against maintainable Meta Ad Library catalogue
-    const cleanLocationCode = (request.countryCode || 'US').trim().toUpperCase();
-    if (!isValidLocationCode(cleanLocationCode)) {
-      throw new Error(`Location code "${request.countryCode}" is not supported by Meta Ad Library catalogue (${META_AD_LIBRARY_LOCATION_CATALOGUE_VERSION}).`);
-    }
-    const locationObj = getLocationByCode(cleanLocationCode);
-    const locationDisplayName = locationObj?.displayName || cleanLocationCode;
-
-    // 2. Preset Validation if in PRESET mode
-    if (request.mode === 'PRESET' && request.presetId) {
-      const presetObj = getPresetById(request.presetId);
-      if (!presetObj) {
-        throw new Error(`Preset "${request.presetId}" was not found in active preset catalogue (${PRESET_CATALOGUE_VERSION}).`);
-      }
-      if (presetObj.status !== 'ACTIVE') {
-        throw new Error(`Preset "${request.presetId}" has status ${presetObj.status} and cannot be used for new research.`);
-      }
-    }
-
-    const workerId = `worker_playwright_pool_${cleanLocationCode.toLowerCase()}_01`;
-
-    // Multi-keyword normalization and safe bounds
-    const rawKeywords = request.keywords && request.keywords.length > 0 
-      ? request.keywords 
-      : request.query.split(/[\n,]+/).map(k => k.trim()).filter(k => k.length > 0);
-    const normalizedKeywords = Array.from(
-      new Set(rawKeywords.map(k => k.trim()).filter(k => k.length > 0 && k.length <= 50))
-    ).slice(0, 10);
-    const keywordsList = normalizedKeywords.length > 0 ? normalizedKeywords : ['saas'];
-
-    const websiteRequired = request.websiteRequired !== false;
-    const totalToExtract = request.maxResults; // Will be capped by available unique corpus
-
-    // Initial Event: Enqueued
-    onProgress?.({
-      jobId,
-      stage: 'INGESTION',
-      stageLabel: 'Scraper Ingestion & Checkpoint Setup',
-      percent: 5,
-      processedCount: 0,
-      totalLimit: totalToExtract,
-      logMessage: `[00:00:01] Job enqueued with idempotency key ${request.idempotencyKey.slice(0, 14)}... Target location: ${locationDisplayName} (${cleanLocationCode}). Mode: ${request.mode || 'CUSTOM'}${request.presetId ? ` [Preset: ${request.presetId}]` : ''}. Keywords (${keywordsList.length}): ${keywordsList.join(', ')}.`
+    const response = await fetch('/api/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request)
     });
-
-    await new Promise(r => setTimeout(r, 200));
-
-    // Stage 1: Playwright Headless Navigation
-    onProgress?.({
-      jobId,
-      stage: 'INGESTION',
-      stageLabel: 'Playwright Browser Worker Launch',
-      percent: 15,
-      processedCount: 0,
-      totalLimit: totalToExtract,
-      logMessage: `[00:00:03] Browser worker ${workerId} launched for target location "${locationDisplayName}". Navigating to public Meta Ad Library search URL for "${keywordsList[0]}".`
-    });
-
-    await new Promise(r => setTimeout(r, 250));
-
-    const discoveredAdvertisers: AdvertiserViewModel[] = [];
-    const discoveredAds: AdViewModel[] = [];
-    const seenEntityKeys = new Set<string>();
-    let excludedNoWebsiteCount = 0;
-
-    // Process Cards through the 6-stage DAG
-    const targetLimit = request.maxResults;
-    for (let i = 0; i < SAAS_CORPUS.length; i++) {
-      if (discoveredAdvertisers.length >= targetLimit) break;
-      const item = SAAS_CORPUS[i];
-      const progressPercent = Math.round(20 + ((i + 1) / totalToExtract) * 70);
-
-      // Backend Website Filter Rule: If usable website is required, discard records without valid website
-      const usableWebsite = isUsableWebsite(item.destinationUrl);
-      if (websiteRequired && !usableWebsite) {
-        excludedNoWebsiteCount++;
-        onProgress?.({
-          jobId,
-          stage: 'VALIDATION',
-          stageLabel: `Filtering Record ${i + 1}/${totalToExtract}: ${item.pageName}`,
-          percent: progressPercent,
-          processedCount: i + 1,
-          totalLimit: totalToExtract,
-          currentEntityName: item.pageName,
-          logMessage: `[00:00:${String(5 + i * 2).padStart(2, '0')}] Excluded record "${item.pageName}": No usable public website detected.`
-        });
-        continue;
-      }
-
-      // Deduplication Rule across keywords and cards
-      const dedupKey = item.domain ? item.domain.toLowerCase() : item.pageName.toLowerCase();
-      if (seenEntityKeys.has(dedupKey)) {
-        onProgress?.({
-          jobId,
-          stage: 'NORMALIZATION',
-          stageLabel: `Deduplicating Record ${i + 1}/${totalToExtract}: ${item.pageName}`,
-          percent: progressPercent,
-          processedCount: i + 1,
-          totalLimit: totalToExtract,
-          currentEntityName: item.pageName,
-          logMessage: `[00:00:${String(5 + i * 2).padStart(2, '0')}] Deduplicated record "${item.pageName}" (matched existing entity ${dedupKey}).`
-        });
+    
+    if (!response.body) throw new Error("No response body");
+    
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let result = null;
+    let buffer = "";
+    
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
         
-        // Merge keyword attribution into the same lead
-        const existingLead = discoveredAdvertisers.find(a => 
-          (a.destinationDomain && a.destinationDomain.toLowerCase() === dedupKey) || 
-          (a.canonicalName.toLowerCase() === dedupKey)
-        );
-        if (existingLead && existingLead.matchedKeywords) {
-          const merged = new Set([...existingLead.matchedKeywords, ...keywordsList.slice(0, 3)]);
-          existingLead.matchedKeywords = Array.from(merged);
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+        
+        for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+                const event = JSON.parse(line);
+                if (event.type === 'error') {
+                    throw new Error(event.message);
+                } else if (event.job) {
+                    // This is the final ResearchExecutionResult
+                    result = event;
+                } else {
+                    // This is a progress event
+                    if (onProgress) onProgress(event);
+                }
+            } catch (e) {
+                console.error("Failed to parse JSON line:", line, e);
+            }
         }
-        
-        continue;
-      }
-      seenEntityKeys.add(dedupKey);
-
-      // Validate URL Safety against SSRF
-      const urlSafety = item.destinationUrl ? validateUrlSafety(item.destinationUrl) : { isSafe: false, reason: 'Empty destination' };
-
-      // Ingestion / Parsing event
-      onProgress?.({
-        jobId,
-        stage: 'PARSING',
-        stageLabel: `Parsing Card ${i + 1}/${totalToExtract}: ${item.pageName}`,
-        percent: progressPercent - 3,
-        processedCount: i + 1,
-        totalLimit: totalToExtract,
-        currentEntityName: item.pageName,
-        logMessage: `[00:00:${String(5 + i * 2).padStart(2, '0')}] Extracted DOM token for Library ID ${item.libraryId}. Page: "${item.pageName}". Destination: ${item.domain || 'None'}`
-      });
-
-      await new Promise(r => setTimeout(r, 100));
-
-      // Network verification & qualification
-      onProgress?.({
-        jobId,
-        stage: 'VALIDATION',
-        stageLabel: `Verifying Network & Scoring: ${item.pageName}`,
-        percent: progressPercent,
-        processedCount: i + 1,
-        totalLimit: totalToExtract,
-        currentEntityName: item.pageName,
-        logMessage: `[00:00:${String(6 + i * 2).padStart(2, '0')}] TLS probe: ${item.websiteStatus === 200 ? 'HTTP 200 OK' : item.websiteStatus === 502 ? 'HTTP 502 ERROR' : 'NOT REACHABLE'}. Computed score: ${item.score.toFixed(1)} [${item.state}]`
-      });
-
-      const advId = `adv_live_${Date.now().toString(36)}_${i + 1}`;
-      const adId = `ad_live_${item.libraryId}`;
-
-      const advRecord: AdvertiserViewModel = {
-        advertiserId: advId,
-        canonicalName: item.pageName,
-        facebookPageName: item.pageName,
-        facebookPageUrl: `https://facebook.com/${item.libraryId}`,
-        locationCode: cleanLocationCode,
-        historicalNames: [
-          { name: item.pageName, observedAt: new Date().toISOString(), sourceTokenId: `tok_${item.libraryId}` }
-        ],
-        adLibraryId: `meta_adlib_${item.libraryId}`,
-        activeAdCount: item.activeAdCount,
-        destinationDomain: item.domain,
-        destinationUrl: item.destinationUrl,
-        matchedKeywords: keywordsList.slice(0, 3),
-        sourcePresetId: request.presetId,
-        websiteReachable: item.websiteStatus === 200,
-        businessIdentitySupported: item.state === 'QUALIFIED',
-        verificationFreshness: 'Just now',
-        verificationStatusCode: item.websiteStatus,
-        tlsVersion: item.tls,
-        ssrfValidated: urlSafety.isSafe,
-        qualificationState: item.state,
-        qualificationScore: item.score,
-        scoreConfidence: item.state === 'DISQUALIFIED' ? 'HIGH' : item.state === 'REVIEW_REQUIRED' ? 'MEDIUM' : 'HIGH',
-        scoringModelVersion: 'lead_qual_v2.4.0-stable',
-        scoreExplanation: item.signals.map((sig, idx) => ({
-          signal: `Evaluation Signal #${idx + 1}`,
-          ruleId: `RULE_SIG_${idx + 1}`,
-          ruleVersion: 'v2.4',
-          contribution: item.state === 'DISQUALIFIED' ? (idx === 0 ? -100 : 0) : 25.0,
-          evidence: sig,
-          explanation: sig
-        })),
-        positiveSignals: item.state !== 'DISQUALIFIED' ? item.signals.slice(0, 3) : [],
-        negativeEvidence: item.state === 'DISQUALIFIED' ? item.signals : item.state === 'REVIEW_REQUIRED' ? [item.signals[2]] : [],
-        missingEvidence: item.state === 'REVIEW_REQUIRED' ? ['State corporate filing confirmation pending'] : [],
-        activeBlockers: item.state === 'DISQUALIFIED' ? ['PROHIBITED_UNSUBSTANTIATED_FINANCIAL_CLAIMS', 'DESTINATION_UNREACHABLE_502'] : [],
-        identityReviewState: item.state === 'REVIEW_REQUIRED' ? 'PENDING_REVIEW' : 'CONFIRMED',
-        hasActiveManualOverride: false,
-        provenanceSummary: {
-          source: 'Meta Ad Library Page Card DOM',
-          observedAt: new Date().toISOString(),
-          adapterVersion: 'meta_adlib_adapter_v4.2.1',
-          extractionVersion: 'dom_parser_v3.1.0',
-          normalizationVersion: 'entity_norm_v2.0.4',
-          identityResolutionVersion: 'cluster_resolv_v1.8.0',
-          verificationVersion: 'network_verify_v3.0.1',
-          scoringVersion: 'lead_qual_v2.4.0-stable',
-          rawPayloadHash: `sha256_${item.libraryId}_verified_ok`
-        },
-        lastCalculatedAt: new Date().toISOString(),
-        dataState: item.state === 'REVIEW_REQUIRED' ? 'CONFLICTING' : 'VERIFIED'
-      };
-
-      const adRecord: AdViewModel = {
-        adId: adId,
-        advertiserId: advId,
-        adLibraryId: item.libraryId,
-        observedText: item.bodyCopy,
-        headline: item.pageName,
-        ctaText: item.cta,
-        startDate: item.startedRunning,
-        platforms: ['FACEBOOK', 'INSTAGRAM'],
-        destinationUrl: item.destinationUrl,
-        creativeType: 'IMAGE',
-        extractionStatus: 'SUCCESS',
-        provenanceHash: `env_${item.libraryId}_sha256`
-      };
-
-      discoveredAdvertisers.push(advRecord);
-      discoveredAds.push(adRecord);
     }
-
-    // Final Emission stage
-    onProgress?.({
-      jobId,
-      stage: 'EMISSION',
-      stageLabel: 'Canonical Emission & Layer A Commit',
-      percent: 100,
-      processedCount: totalToExtract,
-      totalLimit: totalToExtract,
-      logMessage: `[00:00:26] Run completed successfully. ${discoveredAdvertisers.length} verified leads with websites committed to Layer A database (${excludedNoWebsiteCount} records excluded without website).`
-    });
-
-    const completedJob: ResearchJobModel = {
-      jobId,
-      idempotencyKey: request.idempotencyKey,
-      query: request.researchName ? `${request.researchName} (${keywordsList.join(', ')})` : keywordsList.join(', '),
-      countryCode: cleanLocationCode,
-      locationName: locationDisplayName,
-      locationCatalogueVersion: META_AD_LIBRARY_LOCATION_CATALOGUE_VERSION,
-      mode: request.mode || 'CUSTOM',
-      presetId: request.presetId,
-      presetVersion: request.presetVersion || (request.presetId ? PRESET_CATALOGUE_VERSION : undefined),
-      websiteRequired,
-      state: 'COMPLETED',
-      progressPercent: 100,
-      processedCount: totalToExtract,
-      totalExpectedLimit: totalToExtract,
-      startedAt: new Date(startTime).toISOString(),
-      updatedAt: new Date().toISOString(),
-      completedAt: new Date().toISOString(),
-      isPartial: false,
-      workerId,
-      batchId,
-      tenantId: request.tenantId
-    };
-
-    const qualifiedCount = discoveredAdvertisers.filter(a => a.qualificationState === 'QUALIFIED').length;
-    const reviewCount = discoveredAdvertisers.filter(a => a.qualificationState === 'REVIEW_REQUIRED').length;
-    const disqualifiedCount = discoveredAdvertisers.filter(a => a.qualificationState === 'DISQUALIFIED').length;
-    const reachableCount = discoveredAdvertisers.filter(a => a.websiteReachable).length;
-    const reachablePercent = discoveredAdvertisers.length > 0 
-      ? Math.round((reachableCount / discoveredAdvertisers.length) * 100) 
-      : 0;
-    const averageScore = discoveredAdvertisers.length > 0
-      ? Math.round(
-          (discoveredAdvertisers.reduce((acc, a) => acc + a.qualificationScore, 0) / discoveredAdvertisers.length) * 10
-        ) / 10
-      : 0;
-
-    return {
-      job: completedJob,
-      newAdvertisers: discoveredAdvertisers,
-      newAds: discoveredAds,
-      summary: {
-        totalExtracted: totalToExtract,
-        qualifiedCount,
-        reviewCount,
-        disqualifiedCount,
-        reachablePercent,
-        averageScore,
-        durationMs: Date.now() - startTime,
-        excludedNoWebsiteCount,
-        keywordsProcessedCount: keywordsList.length
-      }
-    };
+    
+    if (!result) throw new Error("Failed to receive final result from server.");
+    return result;
   }
 }
