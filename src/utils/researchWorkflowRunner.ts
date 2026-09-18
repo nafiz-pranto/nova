@@ -3,7 +3,8 @@ import {
   AdViewModel, 
   ResearchJobModel, 
   ExtractionPipelineStage,
-  ResearchMode
+  ResearchMode,
+  JobState
 } from '../types';
 import { executeExtractionPipeline } from './extractionEngine';
 import { validateUrlSafety } from './verificationEngine';
@@ -32,6 +33,7 @@ export interface ResearchWorkflowRequest {
   tenantId: string;
   idempotencyKey: string;
   websiteRequired?: boolean;
+  validationMode?: 'LIVE' | 'CONTROLLED_FIXTURE';
 }
 
 export interface WorkflowProgressEvent {
@@ -363,54 +365,181 @@ export class ResearchWorkflowRunner {
   }
 
   /**
-   * Executes an end-to-end research collection run against public Meta Ad Library data
-   * and verifies and qualifies discovered leads.
+   * Fetches all persisted research jobs from the server.
    */
-    public static async executeRun(
+  public static async fetchJobs(): Promise<ResearchJobModel[]> {
+    const res = await fetch('/api/research/jobs');
+    if (!res.ok) {
+      throw new Error(`Failed to fetch jobs from server: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Fetches the lightweight status of a specific job.
+   */
+  public static async fetchJobStatus(jobId: string): Promise<{
+    jobId: string;
+    status: JobState;
+    stage?: string;
+    percent?: number;
+    resultAvailable: boolean;
+    finalLeadCount: number;
+    error?: string | null;
+    challengeReason?: string | null;
+  }> {
+    const res = await fetch(`/api/research/jobs/${encodeURIComponent(jobId)}/status`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch job status for ${jobId}: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Directly retrieves the finalized results of a completed or blocked research job.
+   */
+  public static async fetchJobResults(jobId: string): Promise<ResearchExecutionResult> {
+    const res = await fetch(`/api/research/jobs/${encodeURIComponent(jobId)}/results`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch job results for ${jobId}: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Executes an end-to-end research collection run against public Meta Ad Library data
+   * or via controlled execution fixture for pipeline validation.
+   */
+  public static async executeRun(
     request: ResearchWorkflowRequest,
     onProgress?: (event: WorkflowProgressEvent) => void
   ): Promise<ResearchExecutionResult> {
     const response = await fetch('/api/research', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request)
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request)
     });
-    
-    if (!response.body) throw new Error("No response body");
-    
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => response.statusText);
+      throw new Error(`Server returned HTTP ${response.status}: ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error("No response body received from server");
+    }
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let result = null;
+    let result: ResearchExecutionResult | null = null;
     let buffer = "";
-    
+    let lastJobId: string | null = null;
+    let serverErrorMessage: string | null = null;
+
     while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep incomplete line in buffer
-        
-        for (const line of lines) {
-            if (!line.trim()) continue;
-            try {
-                const event = JSON.parse(line);
-                if (event.type === 'error') {
-                    throw new Error(event.message);
-                } else if (event.job) {
-                    // This is the final ResearchExecutionResult
-                    result = event;
-                } else {
-                    // This is a progress event
-                    if (onProgress) onProgress(event);
-                }
-            } catch (e) {
-                console.error("Failed to parse JSON line:", line, e);
-            }
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let event: any = null;
+        try {
+          event = JSON.parse(line);
+        } catch (parseErr) {
+          console.warn("Failed to parse JSON stream chunk:", line, parseErr);
+          continue;
         }
+
+        if (event.jobId && !lastJobId) {
+          lastJobId = event.jobId;
+        }
+
+        if (event.type === 'error') {
+          serverErrorMessage = event.message || "Server error occurred during research execution.";
+        } else if (event.type === 'blocked') {
+          result = event.result || {
+            job: event.job,
+            newAdvertisers: [],
+            newAds: [],
+            summary: {
+              totalExtracted: 0,
+              qualifiedCount: 0,
+              reviewCount: 0,
+              disqualifiedCount: 0,
+              reachablePercent: 0,
+              averageScore: 0,
+              durationMs: 0,
+              excludedNoWebsiteCount: 0,
+              keywordsProcessedCount: 0
+            }
+          };
+          if (onProgress && event.job) {
+            onProgress({
+              jobId: event.jobId || event.job.jobId,
+              stage: 'INGESTION',
+              stageLabel: 'Meta Research: BLOCKED',
+              percent: 15,
+              processedCount: 0,
+              totalLimit: event.job.totalExpectedLimit || 10,
+              logMessage: `[00:00:05] Research BLOCKED: ${event.message || event.reason}`
+            });
+          }
+        } else if (event.type === 'completed' && event.result) {
+          result = event.result;
+        } else if (event.job && event.newAdvertisers) {
+          // Direct final ResearchExecutionResult payload
+          result = event as ResearchExecutionResult;
+        } else {
+          // Progress event
+          if (onProgress) {
+            onProgress(event);
+          }
+        }
+      }
     }
-    
-    if (!result) throw new Error("Failed to receive final result from server.");
+
+    // Process remainder of buffer
+    if (buffer.trim()) {
+      try {
+        const event = JSON.parse(buffer.trim());
+        if (event.type === 'error') {
+          serverErrorMessage = event.message || serverErrorMessage;
+        } else if (event.type === 'blocked') {
+          result = event.result || result;
+        } else if (event.type === 'completed' && event.result) {
+          result = event.result;
+        } else if (event.job && event.newAdvertisers) {
+          result = event;
+        }
+      } catch (e) {
+        // ignore trailing unparseable chunk
+      }
+    }
+
+    // If stream ended without final result in payload, attempt direct fetch from server result store
+    if (!result && lastJobId) {
+      try {
+        const directResult = await ResearchWorkflowRunner.fetchJobResults(lastJobId);
+        if (directResult && directResult.job) {
+          result = directResult;
+        }
+      } catch (fetchErr) {
+        console.warn(`Direct retrieval attempt for job ${lastJobId} failed:`, fetchErr);
+      }
+    }
+
+    if (serverErrorMessage && !result) {
+      throw new Error(serverErrorMessage);
+    }
+
+    if (!result) {
+      throw new Error("Failed to receive final result from server.");
+    }
+
     return result;
   }
 }

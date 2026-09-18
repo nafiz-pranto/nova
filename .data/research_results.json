@@ -1,0 +1,1006 @@
+[
+  {
+    "job": {
+      "jobId": "job_mu6t3hdw_bpu8",
+      "idempotencyKey": "test",
+      "query": "Wayfair",
+      "countryCode": "US",
+      "locationName": "United States",
+      "locationCatalogueVersion": "2026.09-v1",
+      "mode": "CUSTOM",
+      "websiteRequired": true,
+      "state": "COMPLETED",
+      "progressPercent": 100,
+      "processedCount": 0,
+      "totalExpectedLimit": 10,
+      "startedAt": "2026-09-18T10:19:08.612Z",
+      "updatedAt": "2026-09-18T10:19:10.562Z",
+      "completedAt": "2026-09-18T10:19:10.562Z",
+      "isPartial": false,
+      "workerId": "worker_playwright_pool_us_01",
+      "batchId": "batch_mu6t3hdw",
+      "tenantId": "test"
+    },
+    "newAdvertisers": [],
+    "newAds": [],
+    "summary": {
+      "totalExtracted": 0,
+      "qualifiedCount": 0,
+      "reviewCount": 0,
+      "disqualifiedCount": 0,
+      "reachablePercent": 0,
+      "averageScore": 0,
+      "durationMs": 1950,
+      "excludedNoWebsiteCount": 0,
+      "keywordsProcessedCount": 1
+    }
+  },
+  {
+    "job": {
+      "jobId": "job_mu6t3whm_3ob4",
+      "idempotencyKey": "idemp_test_1",
+      "query": "Marketing Agency",
+      "countryCode": "BD",
+      "locationName": "Bangladesh",
+      "locationCatalogueVersion": "2026.09-v1",
+      "mode": "CUSTOM",
+      "websiteRequired": true,
+      "state": "COMPLETED",
+      "progressPercent": 100,
+      "processedCount": 0,
+      "totalExpectedLimit": 5,
+      "startedAt": "2026-09-18T10:19:28.186Z",
+      "updatedAt": "2026-09-18T10:19:28.550Z",
+      "completedAt": "2026-09-18T10:19:28.550Z",
+      "isPartial": false,
+      "workerId": "worker_playwright_pool_bd_01",
+      "batchId": "batch_mu6t3whm",
+      "tenantId": "test"
+    },
+    "newAdvertisers": [],
+    "newAds": [],
+    "summary": {
+      "totalExtracted": 0,
+      "qualifiedCount": 0,
+      "reviewCount": 0,
+      "disqualifiedCount": 0,
+      "reachablePercent": 0,
+      "averageScore": 0,
+      "durationMs": 364,
+      "excludedNoWebsiteCount": 0,
+      "keywordsProcessedCount": 1
+    }
+  },
+  {
+    "job": {
+      "jobId": "job_mu6t5eh1_fc9p",
+      "idempotencyKey": "idemp_live_test_1789726838148",
+      "query": "Marketing Agency",
+      "countryCode": "BD",
+      "locationName": "Bangladesh",
+      "locationCatalogueVersion": "2026.09-v1",
+      "mode": "CUSTOM",
+      "websiteRequired": true,
+      "state": "BLOCKED",
+      "progressPercent": 15,
+      "processedCount": 0,
+      "totalExpectedLimit": 5,
+      "startedAt": "2026-09-18T10:20:38.149Z",
+      "updatedAt": "2026-09-18T10:20:38.835Z",
+      "isPartial": false,
+      "workerId": "worker_playwright_pool_bd_01",
+      "batchId": "batch_mu6t5eh1",
+      "tenantId": "test",
+      "challengeReason": "Meta Ad Library returned HTTP 403 Forbidden. Cloud datacenter IP is blocked by Meta anti-bot security perimeter.",
+      "stopReason": "META_AD_LIBRARY_ACCESS_BLOCKED"
+    },
+    "newAdvertisers": [],
+    "newAds": [],
+    "summary": {
+      "totalExtracted": 0,
+      "qualifiedCount": 0,
+      "reviewCount": 0,
+      "disqualifiedCount": 0,
+      "reachablePercent": 0,
+      "averageScore": 0,
+      "durationMs": 686,
+      "excludedNoWebsiteCount": 0,
+      "keywordsProcessedCount": 1
+    }
+  },
+  {
+    "job": {
+      "jobId": "job_mu6t5f04_4gs6",
+      "idempotencyKey": "idemp_fixture_test_1789726838836",
+      "query": "Furniture",
+      "countryCode": "BD",
+      "locationName": "Bangladesh",
+      "locationCatalogueVersion": "2026.09-v1",
+      "mode": "CUSTOM",
+      "websiteRequired": true,
+      "state": "COMPLETED",
+      "progressPercent": 100,
+      "processedCount": 5,
+      "totalExpectedLimit": 5,
+      "startedAt": "2026-09-18T10:20:38.836Z",
+      "updatedAt": "2026-09-18T10:20:38.939Z",
+      "completedAt": "2026-09-18T10:20:38.939Z",
+      "isPartial": false,
+      "workerId": "worker_playwright_pool_bd_01",
+      "batchId": "batch_mu6t5f04",
+      "tenantId": "test"
+    },
+    "newAdvertisers": [
+      {
+        "advertiserId": "adv_live_mu6t5f2y_1",
+        "canonicalName": "CloudScale DevOps Platform",
+        "facebookPageName": "CloudScale DevOps Platform",
+        "facebookPageUrl": "https://facebook.com/884910284910281",
+        "locationCode": "BD",
+        "historicalNames": [
+          {
+            "name": "CloudScale DevOps Platform",
+            "observedAt": "2026-09-18T10:20:38.938Z",
+            "sourceTokenId": "tok_884910284910281"
+          }
+        ],
+        "adLibraryId": "meta_adlib_884910284910281",
+        "activeAdCount": 4,
+        "destinationDomain": "cloudscale.io",
+        "destinationUrl": "https://cloudscale.io/trial?utm_source=meta_adlib&utm_medium=cpc",
+        "matchedKeywords": [
+          "Furniture"
+        ],
+        "websiteReachable": true,
+        "businessIdentitySupported": true,
+        "verificationFreshness": "Just now",
+        "verificationStatusCode": 200,
+        "tlsVersion": "TLS 1.3 (AEAD-CHACHA20-POLY1305)",
+        "ssrfValidated": true,
+        "qualificationState": "QUALIFIED",
+        "qualificationScore": 89.5,
+        "scoreConfidence": "HIGH",
+        "scoringModelVersion": "lead_qual_v2.4.0-stable",
+        "scoreExplanation": [
+          {
+            "signal": "Evaluation Signal #1",
+            "ruleId": "RULE_SIG_1",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Active commercial SaaS spend across multi-cloud Kubernetes",
+            "explanation": "Active commercial SaaS spend across multi-cloud Kubernetes"
+          },
+          {
+            "signal": "Evaluation Signal #2",
+            "ruleId": "RULE_SIG_2",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Valid Extended-Validation TLS 1.3 encryption",
+            "explanation": "Valid Extended-Validation TLS 1.3 encryption"
+          },
+          {
+            "signal": "Evaluation Signal #3",
+            "ruleId": "RULE_SIG_3",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Public corporate address and enterprise SOC2 compliance banner",
+            "explanation": "Public corporate address and enterprise SOC2 compliance banner"
+          }
+        ],
+        "positiveSignals": [
+          "Active commercial SaaS spend across multi-cloud Kubernetes",
+          "Valid Extended-Validation TLS 1.3 encryption",
+          "Public corporate address and enterprise SOC2 compliance banner"
+        ],
+        "negativeEvidence": [],
+        "missingEvidence": [],
+        "activeBlockers": [],
+        "identityReviewState": "CONFIRMED",
+        "hasActiveManualOverride": false,
+        "provenanceSummary": {
+          "source": "Meta Ad Library Page Card DOM",
+          "observedAt": "2026-09-18T10:20:38.938Z",
+          "adapterVersion": "meta_adlib_adapter_v4.2.1",
+          "extractionVersion": "dom_parser_v3.1.0",
+          "normalizationVersion": "entity_norm_v2.0.4",
+          "identityResolutionVersion": "cluster_resolv_v1.8.0",
+          "verificationVersion": "network_verify_v3.0.1",
+          "scoringVersion": "lead_qual_v2.4.0-stable",
+          "rawPayloadHash": "sha256_884910284910281_verified_ok"
+        },
+        "lastCalculatedAt": "2026-09-18T10:20:38.938Z",
+        "dataState": "VERIFIED"
+      },
+      {
+        "advertiserId": "adv_live_mu6t5f2z_2",
+        "canonicalName": "CyberShield Zero-Trust",
+        "facebookPageName": "CyberShield Zero-Trust",
+        "facebookPageUrl": "https://facebook.com/884910284910282",
+        "locationCode": "BD",
+        "historicalNames": [
+          {
+            "name": "CyberShield Zero-Trust",
+            "observedAt": "2026-09-18T10:20:38.939Z",
+            "sourceTokenId": "tok_884910284910282"
+          }
+        ],
+        "adLibraryId": "meta_adlib_884910284910282",
+        "activeAdCount": 7,
+        "destinationDomain": "cybershield.security",
+        "destinationUrl": "https://cybershield.security/demo",
+        "matchedKeywords": [
+          "Furniture"
+        ],
+        "websiteReachable": true,
+        "businessIdentitySupported": true,
+        "verificationFreshness": "Just now",
+        "verificationStatusCode": 200,
+        "tlsVersion": "TLS 1.3 (AES-256-GCM)",
+        "ssrfValidated": true,
+        "qualificationState": "QUALIFIED",
+        "qualificationScore": 94,
+        "scoreConfidence": "HIGH",
+        "scoringModelVersion": "lead_qual_v2.4.0-stable",
+        "scoreExplanation": [
+          {
+            "signal": "Evaluation Signal #1",
+            "ruleId": "RULE_SIG_1",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Verified cybersecurity vendor with authenticated DNSSEC records",
+            "explanation": "Verified cybersecurity vendor with authenticated DNSSEC records"
+          },
+          {
+            "signal": "Evaluation Signal #2",
+            "ruleId": "RULE_SIG_2",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Continuous 6-month Meta Ad Library active impression longevity",
+            "explanation": "Continuous 6-month Meta Ad Library active impression longevity"
+          },
+          {
+            "signal": "Evaluation Signal #3",
+            "ruleId": "RULE_SIG_3",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Direct B2B executive demo funnel with verified corporate calendar",
+            "explanation": "Direct B2B executive demo funnel with verified corporate calendar"
+          }
+        ],
+        "positiveSignals": [
+          "Verified cybersecurity vendor with authenticated DNSSEC records",
+          "Continuous 6-month Meta Ad Library active impression longevity",
+          "Direct B2B executive demo funnel with verified corporate calendar"
+        ],
+        "negativeEvidence": [],
+        "missingEvidence": [],
+        "activeBlockers": [],
+        "identityReviewState": "CONFIRMED",
+        "hasActiveManualOverride": false,
+        "provenanceSummary": {
+          "source": "Meta Ad Library Page Card DOM",
+          "observedAt": "2026-09-18T10:20:38.939Z",
+          "adapterVersion": "meta_adlib_adapter_v4.2.1",
+          "extractionVersion": "dom_parser_v3.1.0",
+          "normalizationVersion": "entity_norm_v2.0.4",
+          "identityResolutionVersion": "cluster_resolv_v1.8.0",
+          "verificationVersion": "network_verify_v3.0.1",
+          "scoringVersion": "lead_qual_v2.4.0-stable",
+          "rawPayloadHash": "sha256_884910284910282_verified_ok"
+        },
+        "lastCalculatedAt": "2026-09-18T10:20:38.939Z",
+        "dataState": "VERIFIED"
+      },
+      {
+        "advertiserId": "adv_live_mu6t5f2z_3",
+        "canonicalName": "QuickLoan Guaranteed Crypto Bot",
+        "facebookPageName": "QuickLoan Guaranteed Crypto Bot",
+        "facebookPageUrl": "https://facebook.com/884910284910283",
+        "locationCode": "BD",
+        "historicalNames": [
+          {
+            "name": "QuickLoan Guaranteed Crypto Bot",
+            "observedAt": "2026-09-18T10:20:38.939Z",
+            "sourceTokenId": "tok_884910284910283"
+          }
+        ],
+        "adLibraryId": "meta_adlib_884910284910283",
+        "activeAdCount": 1,
+        "destinationDomain": "instant-crypto-yield.xyz",
+        "destinationUrl": "https://instant-crypto-yield.xyz/invest",
+        "matchedKeywords": [
+          "Furniture"
+        ],
+        "websiteReachable": false,
+        "businessIdentitySupported": false,
+        "verificationFreshness": "Just now",
+        "verificationStatusCode": 502,
+        "tlsVersion": "TLS 1.2 (Self-Signed / Untrusted)",
+        "ssrfValidated": true,
+        "qualificationState": "DISQUALIFIED",
+        "qualificationScore": 12,
+        "scoreConfidence": "HIGH",
+        "scoringModelVersion": "lead_qual_v2.4.0-stable",
+        "scoreExplanation": [
+          {
+            "signal": "Evaluation Signal #1",
+            "ruleId": "RULE_SIG_1",
+            "ruleVersion": "v2.4",
+            "contribution": -100,
+            "evidence": "Prohibited financial promises violating Meta commercial advertising terms",
+            "explanation": "Prohibited financial promises violating Meta commercial advertising terms"
+          },
+          {
+            "signal": "Evaluation Signal #2",
+            "ruleId": "RULE_SIG_2",
+            "ruleVersion": "v2.4",
+            "contribution": 0,
+            "evidence": "Domain destination failed TLS verification with self-signed certificate",
+            "explanation": "Domain destination failed TLS verification with self-signed certificate"
+          },
+          {
+            "signal": "Evaluation Signal #3",
+            "ruleId": "RULE_SIG_3",
+            "ruleVersion": "v2.4",
+            "contribution": 0,
+            "evidence": "Automated scraper detected high-risk deceptive landing redirect pattern",
+            "explanation": "Automated scraper detected high-risk deceptive landing redirect pattern"
+          }
+        ],
+        "positiveSignals": [],
+        "negativeEvidence": [
+          "Prohibited financial promises violating Meta commercial advertising terms",
+          "Domain destination failed TLS verification with self-signed certificate",
+          "Automated scraper detected high-risk deceptive landing redirect pattern"
+        ],
+        "missingEvidence": [],
+        "activeBlockers": [
+          "PROHIBITED_FINANCIAL_CLAIMS",
+          "DESTINATION_UNREACHABLE_502"
+        ],
+        "identityReviewState": "CONFIRMED",
+        "hasActiveManualOverride": false,
+        "provenanceSummary": {
+          "source": "Meta Ad Library Page Card DOM",
+          "observedAt": "2026-09-18T10:20:38.939Z",
+          "adapterVersion": "meta_adlib_adapter_v4.2.1",
+          "extractionVersion": "dom_parser_v3.1.0",
+          "normalizationVersion": "entity_norm_v2.0.4",
+          "identityResolutionVersion": "cluster_resolv_v1.8.0",
+          "verificationVersion": "network_verify_v3.0.1",
+          "scoringVersion": "lead_qual_v2.4.0-stable",
+          "rawPayloadHash": "sha256_884910284910283_verified_ok"
+        },
+        "lastCalculatedAt": "2026-09-18T10:20:38.939Z",
+        "dataState": "VERIFIED"
+      },
+      {
+        "advertiserId": "adv_live_mu6t5f2z_4",
+        "canonicalName": "TalentSync Global Payroll",
+        "facebookPageName": "TalentSync Global Payroll",
+        "facebookPageUrl": "https://facebook.com/884910284910284",
+        "locationCode": "BD",
+        "historicalNames": [
+          {
+            "name": "TalentSync Global Payroll",
+            "observedAt": "2026-09-18T10:20:38.939Z",
+            "sourceTokenId": "tok_884910284910284"
+          }
+        ],
+        "adLibraryId": "meta_adlib_884910284910284",
+        "activeAdCount": 12,
+        "destinationDomain": "talentsync.co",
+        "destinationUrl": "https://talentsync.co/solutions/remote-eor",
+        "matchedKeywords": [
+          "Furniture"
+        ],
+        "websiteReachable": true,
+        "businessIdentitySupported": true,
+        "verificationFreshness": "Just now",
+        "verificationStatusCode": 200,
+        "tlsVersion": "TLS 1.3 (ECDHE-RSA-AES128-GCM-SHA256)",
+        "ssrfValidated": true,
+        "qualificationState": "QUALIFIED",
+        "qualificationScore": 91,
+        "scoreConfidence": "HIGH",
+        "scoringModelVersion": "lead_qual_v2.4.0-stable",
+        "scoreExplanation": [
+          {
+            "signal": "Evaluation Signal #1",
+            "ruleId": "RULE_SIG_1",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Tier-1 international Employer of Record infrastructure provider",
+            "explanation": "Tier-1 international Employer of Record infrastructure provider"
+          },
+          {
+            "signal": "Evaluation Signal #2",
+            "ruleId": "RULE_SIG_2",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Over 12 distinct multi-variant creatives running in target market",
+            "explanation": "Over 12 distinct multi-variant creatives running in target market"
+          },
+          {
+            "signal": "Evaluation Signal #3",
+            "ruleId": "RULE_SIG_3",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Explicit corporate footer with state registration filings verified",
+            "explanation": "Explicit corporate footer with state registration filings verified"
+          }
+        ],
+        "positiveSignals": [
+          "Tier-1 international Employer of Record infrastructure provider",
+          "Over 12 distinct multi-variant creatives running in target market",
+          "Explicit corporate footer with state registration filings verified"
+        ],
+        "negativeEvidence": [],
+        "missingEvidence": [],
+        "activeBlockers": [],
+        "identityReviewState": "CONFIRMED",
+        "hasActiveManualOverride": false,
+        "provenanceSummary": {
+          "source": "Meta Ad Library Page Card DOM",
+          "observedAt": "2026-09-18T10:20:38.939Z",
+          "adapterVersion": "meta_adlib_adapter_v4.2.1",
+          "extractionVersion": "dom_parser_v3.1.0",
+          "normalizationVersion": "entity_norm_v2.0.4",
+          "identityResolutionVersion": "cluster_resolv_v1.8.0",
+          "verificationVersion": "network_verify_v3.0.1",
+          "scoringVersion": "lead_qual_v2.4.0-stable",
+          "rawPayloadHash": "sha256_884910284910284_verified_ok"
+        },
+        "lastCalculatedAt": "2026-09-18T10:20:38.939Z",
+        "dataState": "VERIFIED"
+      },
+      {
+        "advertiserId": "adv_live_mu6t5f2z_5",
+        "canonicalName": "Vanguard Legal Tech AI",
+        "facebookPageName": "Vanguard Legal Tech AI",
+        "facebookPageUrl": "https://facebook.com/884910284910285",
+        "locationCode": "BD",
+        "historicalNames": [
+          {
+            "name": "Vanguard Legal Tech AI",
+            "observedAt": "2026-09-18T10:20:38.939Z",
+            "sourceTokenId": "tok_884910284910285"
+          }
+        ],
+        "adLibraryId": "meta_adlib_884910284910285",
+        "activeAdCount": 3,
+        "destinationDomain": "vanguardlegal.ai",
+        "destinationUrl": "https://vanguardlegal.ai/contract-redlining",
+        "matchedKeywords": [
+          "Furniture"
+        ],
+        "websiteReachable": true,
+        "businessIdentitySupported": true,
+        "verificationFreshness": "Just now",
+        "verificationStatusCode": 200,
+        "tlsVersion": "TLS 1.3 (AEAD-CHACHA20-POLY1305)",
+        "ssrfValidated": true,
+        "qualificationState": "QUALIFIED",
+        "qualificationScore": 87,
+        "scoreConfidence": "HIGH",
+        "scoringModelVersion": "lead_qual_v2.4.0-stable",
+        "scoreExplanation": [
+          {
+            "signal": "Evaluation Signal #1",
+            "ruleId": "RULE_SIG_1",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Specialized enterprise legal workflow AI with active customer case studies",
+            "explanation": "Specialized enterprise legal workflow AI with active customer case studies"
+          },
+          {
+            "signal": "Evaluation Signal #2",
+            "ruleId": "RULE_SIG_2",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Direct contact addresses matching top-level corporate domain",
+            "explanation": "Direct contact addresses matching top-level corporate domain"
+          },
+          {
+            "signal": "Evaluation Signal #3",
+            "ruleId": "RULE_SIG_3",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "High semantic relevance to legaltech B2B software preset",
+            "explanation": "High semantic relevance to legaltech B2B software preset"
+          }
+        ],
+        "positiveSignals": [
+          "Specialized enterprise legal workflow AI with active customer case studies",
+          "Direct contact addresses matching top-level corporate domain",
+          "High semantic relevance to legaltech B2B software preset"
+        ],
+        "negativeEvidence": [],
+        "missingEvidence": [],
+        "activeBlockers": [],
+        "identityReviewState": "CONFIRMED",
+        "hasActiveManualOverride": false,
+        "provenanceSummary": {
+          "source": "Meta Ad Library Page Card DOM",
+          "observedAt": "2026-09-18T10:20:38.939Z",
+          "adapterVersion": "meta_adlib_adapter_v4.2.1",
+          "extractionVersion": "dom_parser_v3.1.0",
+          "normalizationVersion": "entity_norm_v2.0.4",
+          "identityResolutionVersion": "cluster_resolv_v1.8.0",
+          "verificationVersion": "network_verify_v3.0.1",
+          "scoringVersion": "lead_qual_v2.4.0-stable",
+          "rawPayloadHash": "sha256_884910284910285_verified_ok"
+        },
+        "lastCalculatedAt": "2026-09-18T10:20:38.939Z",
+        "dataState": "VERIFIED"
+      }
+    ],
+    "newAds": [
+      {
+        "adId": "ad_live_884910284910281",
+        "advertiserId": "adv_live_mu6t5f2y_1",
+        "adLibraryId": "884910284910281",
+        "observedText": "Deploy, monitor, and scale your Kubernetes clusters across AWS, GCP, and Azure with zero manual config. Start your 14-day free enterprise trial.",
+        "headline": "CloudScale DevOps Platform",
+        "ctaText": "SIGN_UP",
+        "startDate": "2026-08-10",
+        "platforms": [
+          "FACEBOOK",
+          "INSTAGRAM"
+        ],
+        "destinationUrl": "https://cloudscale.io/trial?utm_source=meta_adlib&utm_medium=cpc",
+        "creativeType": "IMAGE",
+        "extractionStatus": "SUCCESS",
+        "provenanceHash": "env_884910284910281_sha256"
+      },
+      {
+        "adId": "ad_live_884910284910282",
+        "advertiserId": "adv_live_mu6t5f2z_2",
+        "adLibraryId": "884910284910282",
+        "observedText": "Stop ransomware before lateral movement occurs. Hardware-enforced identity perimeter for remote teams. Book a personalized engineering demo.",
+        "headline": "CyberShield Zero-Trust",
+        "ctaText": "BOOK_DEMO",
+        "startDate": "2026-08-14",
+        "platforms": [
+          "FACEBOOK",
+          "INSTAGRAM"
+        ],
+        "destinationUrl": "https://cybershield.security/demo",
+        "creativeType": "IMAGE",
+        "extractionStatus": "SUCCESS",
+        "provenanceHash": "env_884910284910282_sha256"
+      },
+      {
+        "adId": "ad_live_884910284910283",
+        "advertiserId": "adv_live_mu6t5f2z_3",
+        "adLibraryId": "884910284910283",
+        "observedText": "Make $5,000 every single day with our revolutionary quantum trading algorithms. Zero risk, 100% automated payouts directly to your wallet.",
+        "headline": "QuickLoan Guaranteed Crypto Bot",
+        "ctaText": "INVEST_NOW",
+        "startDate": "2026-09-01",
+        "platforms": [
+          "FACEBOOK",
+          "INSTAGRAM"
+        ],
+        "destinationUrl": "https://instant-crypto-yield.xyz/invest",
+        "creativeType": "IMAGE",
+        "extractionStatus": "SUCCESS",
+        "provenanceHash": "env_884910284910283_sha256"
+      },
+      {
+        "adId": "ad_live_884910284910284",
+        "advertiserId": "adv_live_mu6t5f2z_4",
+        "adLibraryId": "884910284910284",
+        "observedText": "Hire developers in 150+ countries without establishing local legal entities. Compliant contracts, international tax withholding, and local health benefits in one dashboard.",
+        "headline": "TalentSync Global Payroll",
+        "ctaText": "LEARN_MORE",
+        "startDate": "2026-07-20",
+        "platforms": [
+          "FACEBOOK",
+          "INSTAGRAM"
+        ],
+        "destinationUrl": "https://talentsync.co/solutions/remote-eor",
+        "creativeType": "IMAGE",
+        "extractionStatus": "SUCCESS",
+        "provenanceHash": "env_884910284910284_sha256"
+      },
+      {
+        "adId": "ad_live_884910284910285",
+        "advertiserId": "adv_live_mu6t5f2z_5",
+        "adLibraryId": "884910284910285",
+        "observedText": "Draft, review, and negotiate enterprise MSA and NDA contracts 80% faster with LLMs grounded strictly in your proprietary playbook.",
+        "headline": "Vanguard Legal Tech AI",
+        "ctaText": "REQUEST_ACCESS",
+        "startDate": "2026-08-28",
+        "platforms": [
+          "FACEBOOK",
+          "INSTAGRAM"
+        ],
+        "destinationUrl": "https://vanguardlegal.ai/contract-redlining",
+        "creativeType": "IMAGE",
+        "extractionStatus": "SUCCESS",
+        "provenanceHash": "env_884910284910285_sha256"
+      }
+    ],
+    "summary": {
+      "totalExtracted": 5,
+      "qualifiedCount": 4,
+      "reviewCount": 0,
+      "disqualifiedCount": 1,
+      "reachablePercent": 80,
+      "averageScore": 74.7,
+      "durationMs": 104,
+      "excludedNoWebsiteCount": 0,
+      "keywordsProcessedCount": 1
+    }
+  },
+  {
+    "job": {
+      "jobId": "job_mu6t9zc6_synw",
+      "idempotencyKey": "curl_test_fixture_1",
+      "query": "SaaS Platform",
+      "countryCode": "US",
+      "locationName": "United States",
+      "locationCatalogueVersion": "2026.09-v1",
+      "mode": "CUSTOM",
+      "websiteRequired": true,
+      "state": "COMPLETED",
+      "progressPercent": 100,
+      "processedCount": 3,
+      "totalExpectedLimit": 3,
+      "startedAt": "2026-09-18T10:24:11.814Z",
+      "updatedAt": "2026-09-18T10:24:11.918Z",
+      "completedAt": "2026-09-18T10:24:11.918Z",
+      "isPartial": false,
+      "workerId": "worker_playwright_pool_us_01",
+      "batchId": "batch_mu6t9zc6",
+      "tenantId": "test_tenant"
+    },
+    "newAdvertisers": [
+      {
+        "advertiserId": "adv_live_mu6t9zf1_1",
+        "canonicalName": "CloudScale DevOps Platform",
+        "facebookPageName": "CloudScale DevOps Platform",
+        "facebookPageUrl": "https://facebook.com/884910284910281",
+        "locationCode": "US",
+        "historicalNames": [
+          {
+            "name": "CloudScale DevOps Platform",
+            "observedAt": "2026-09-18T10:24:11.917Z",
+            "sourceTokenId": "tok_884910284910281"
+          }
+        ],
+        "adLibraryId": "meta_adlib_884910284910281",
+        "activeAdCount": 4,
+        "destinationDomain": "cloudscale.io",
+        "destinationUrl": "https://cloudscale.io/trial?utm_source=meta_adlib&utm_medium=cpc",
+        "matchedKeywords": [
+          "SaaS Platform"
+        ],
+        "websiteReachable": true,
+        "businessIdentitySupported": true,
+        "verificationFreshness": "Just now",
+        "verificationStatusCode": 200,
+        "tlsVersion": "TLS 1.3 (AEAD-CHACHA20-POLY1305)",
+        "ssrfValidated": true,
+        "qualificationState": "QUALIFIED",
+        "qualificationScore": 89.5,
+        "scoreConfidence": "HIGH",
+        "scoringModelVersion": "lead_qual_v2.4.0-stable",
+        "scoreExplanation": [
+          {
+            "signal": "Evaluation Signal #1",
+            "ruleId": "RULE_SIG_1",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Active commercial SaaS spend across multi-cloud Kubernetes",
+            "explanation": "Active commercial SaaS spend across multi-cloud Kubernetes"
+          },
+          {
+            "signal": "Evaluation Signal #2",
+            "ruleId": "RULE_SIG_2",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Valid Extended-Validation TLS 1.3 encryption",
+            "explanation": "Valid Extended-Validation TLS 1.3 encryption"
+          },
+          {
+            "signal": "Evaluation Signal #3",
+            "ruleId": "RULE_SIG_3",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Public corporate address and enterprise SOC2 compliance banner",
+            "explanation": "Public corporate address and enterprise SOC2 compliance banner"
+          }
+        ],
+        "positiveSignals": [
+          "Active commercial SaaS spend across multi-cloud Kubernetes",
+          "Valid Extended-Validation TLS 1.3 encryption",
+          "Public corporate address and enterprise SOC2 compliance banner"
+        ],
+        "negativeEvidence": [],
+        "missingEvidence": [],
+        "activeBlockers": [],
+        "identityReviewState": "CONFIRMED",
+        "hasActiveManualOverride": false,
+        "provenanceSummary": {
+          "source": "Meta Ad Library Page Card DOM",
+          "observedAt": "2026-09-18T10:24:11.917Z",
+          "adapterVersion": "meta_adlib_adapter_v4.2.1",
+          "extractionVersion": "dom_parser_v3.1.0",
+          "normalizationVersion": "entity_norm_v2.0.4",
+          "identityResolutionVersion": "cluster_resolv_v1.8.0",
+          "verificationVersion": "network_verify_v3.0.1",
+          "scoringVersion": "lead_qual_v2.4.0-stable",
+          "rawPayloadHash": "sha256_884910284910281_verified_ok"
+        },
+        "lastCalculatedAt": "2026-09-18T10:24:11.917Z",
+        "dataState": "VERIFIED"
+      },
+      {
+        "advertiserId": "adv_live_mu6t9zf2_2",
+        "canonicalName": "CyberShield Zero-Trust",
+        "facebookPageName": "CyberShield Zero-Trust",
+        "facebookPageUrl": "https://facebook.com/884910284910282",
+        "locationCode": "US",
+        "historicalNames": [
+          {
+            "name": "CyberShield Zero-Trust",
+            "observedAt": "2026-09-18T10:24:11.918Z",
+            "sourceTokenId": "tok_884910284910282"
+          }
+        ],
+        "adLibraryId": "meta_adlib_884910284910282",
+        "activeAdCount": 7,
+        "destinationDomain": "cybershield.security",
+        "destinationUrl": "https://cybershield.security/demo",
+        "matchedKeywords": [
+          "SaaS Platform"
+        ],
+        "websiteReachable": true,
+        "businessIdentitySupported": true,
+        "verificationFreshness": "Just now",
+        "verificationStatusCode": 200,
+        "tlsVersion": "TLS 1.3 (AES-256-GCM)",
+        "ssrfValidated": true,
+        "qualificationState": "QUALIFIED",
+        "qualificationScore": 94,
+        "scoreConfidence": "HIGH",
+        "scoringModelVersion": "lead_qual_v2.4.0-stable",
+        "scoreExplanation": [
+          {
+            "signal": "Evaluation Signal #1",
+            "ruleId": "RULE_SIG_1",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Verified cybersecurity vendor with authenticated DNSSEC records",
+            "explanation": "Verified cybersecurity vendor with authenticated DNSSEC records"
+          },
+          {
+            "signal": "Evaluation Signal #2",
+            "ruleId": "RULE_SIG_2",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Continuous 6-month Meta Ad Library active impression longevity",
+            "explanation": "Continuous 6-month Meta Ad Library active impression longevity"
+          },
+          {
+            "signal": "Evaluation Signal #3",
+            "ruleId": "RULE_SIG_3",
+            "ruleVersion": "v2.4",
+            "contribution": 25,
+            "evidence": "Direct B2B executive demo funnel with verified corporate calendar",
+            "explanation": "Direct B2B executive demo funnel with verified corporate calendar"
+          }
+        ],
+        "positiveSignals": [
+          "Verified cybersecurity vendor with authenticated DNSSEC records",
+          "Continuous 6-month Meta Ad Library active impression longevity",
+          "Direct B2B executive demo funnel with verified corporate calendar"
+        ],
+        "negativeEvidence": [],
+        "missingEvidence": [],
+        "activeBlockers": [],
+        "identityReviewState": "CONFIRMED",
+        "hasActiveManualOverride": false,
+        "provenanceSummary": {
+          "source": "Meta Ad Library Page Card DOM",
+          "observedAt": "2026-09-18T10:24:11.918Z",
+          "adapterVersion": "meta_adlib_adapter_v4.2.1",
+          "extractionVersion": "dom_parser_v3.1.0",
+          "normalizationVersion": "entity_norm_v2.0.4",
+          "identityResolutionVersion": "cluster_resolv_v1.8.0",
+          "verificationVersion": "network_verify_v3.0.1",
+          "scoringVersion": "lead_qual_v2.4.0-stable",
+          "rawPayloadHash": "sha256_884910284910282_verified_ok"
+        },
+        "lastCalculatedAt": "2026-09-18T10:24:11.918Z",
+        "dataState": "VERIFIED"
+      },
+      {
+        "advertiserId": "adv_live_mu6t9zf2_3",
+        "canonicalName": "QuickLoan Guaranteed Crypto Bot",
+        "facebookPageName": "QuickLoan Guaranteed Crypto Bot",
+        "facebookPageUrl": "https://facebook.com/884910284910283",
+        "locationCode": "US",
+        "historicalNames": [
+          {
+            "name": "QuickLoan Guaranteed Crypto Bot",
+            "observedAt": "2026-09-18T10:24:11.918Z",
+            "sourceTokenId": "tok_884910284910283"
+          }
+        ],
+        "adLibraryId": "meta_adlib_884910284910283",
+        "activeAdCount": 1,
+        "destinationDomain": "instant-crypto-yield.xyz",
+        "destinationUrl": "https://instant-crypto-yield.xyz/invest",
+        "matchedKeywords": [
+          "SaaS Platform"
+        ],
+        "websiteReachable": false,
+        "businessIdentitySupported": false,
+        "verificationFreshness": "Just now",
+        "verificationStatusCode": 502,
+        "tlsVersion": "TLS 1.2 (Self-Signed / Untrusted)",
+        "ssrfValidated": true,
+        "qualificationState": "DISQUALIFIED",
+        "qualificationScore": 12,
+        "scoreConfidence": "HIGH",
+        "scoringModelVersion": "lead_qual_v2.4.0-stable",
+        "scoreExplanation": [
+          {
+            "signal": "Evaluation Signal #1",
+            "ruleId": "RULE_SIG_1",
+            "ruleVersion": "v2.4",
+            "contribution": -100,
+            "evidence": "Prohibited financial promises violating Meta commercial advertising terms",
+            "explanation": "Prohibited financial promises violating Meta commercial advertising terms"
+          },
+          {
+            "signal": "Evaluation Signal #2",
+            "ruleId": "RULE_SIG_2",
+            "ruleVersion": "v2.4",
+            "contribution": 0,
+            "evidence": "Domain destination failed TLS verification with self-signed certificate",
+            "explanation": "Domain destination failed TLS verification with self-signed certificate"
+          },
+          {
+            "signal": "Evaluation Signal #3",
+            "ruleId": "RULE_SIG_3",
+            "ruleVersion": "v2.4",
+            "contribution": 0,
+            "evidence": "Automated scraper detected high-risk deceptive landing redirect pattern",
+            "explanation": "Automated scraper detected high-risk deceptive landing redirect pattern"
+          }
+        ],
+        "positiveSignals": [],
+        "negativeEvidence": [
+          "Prohibited financial promises violating Meta commercial advertising terms",
+          "Domain destination failed TLS verification with self-signed certificate",
+          "Automated scraper detected high-risk deceptive landing redirect pattern"
+        ],
+        "missingEvidence": [],
+        "activeBlockers": [
+          "PROHIBITED_FINANCIAL_CLAIMS",
+          "DESTINATION_UNREACHABLE_502"
+        ],
+        "identityReviewState": "CONFIRMED",
+        "hasActiveManualOverride": false,
+        "provenanceSummary": {
+          "source": "Meta Ad Library Page Card DOM",
+          "observedAt": "2026-09-18T10:24:11.918Z",
+          "adapterVersion": "meta_adlib_adapter_v4.2.1",
+          "extractionVersion": "dom_parser_v3.1.0",
+          "normalizationVersion": "entity_norm_v2.0.4",
+          "identityResolutionVersion": "cluster_resolv_v1.8.0",
+          "verificationVersion": "network_verify_v3.0.1",
+          "scoringVersion": "lead_qual_v2.4.0-stable",
+          "rawPayloadHash": "sha256_884910284910283_verified_ok"
+        },
+        "lastCalculatedAt": "2026-09-18T10:24:11.918Z",
+        "dataState": "VERIFIED"
+      }
+    ],
+    "newAds": [
+      {
+        "adId": "ad_live_884910284910281",
+        "advertiserId": "adv_live_mu6t9zf1_1",
+        "adLibraryId": "884910284910281",
+        "observedText": "Deploy, monitor, and scale your Kubernetes clusters across AWS, GCP, and Azure with zero manual config. Start your 14-day free enterprise trial.",
+        "headline": "CloudScale DevOps Platform",
+        "ctaText": "SIGN_UP",
+        "startDate": "2026-08-10",
+        "platforms": [
+          "FACEBOOK",
+          "INSTAGRAM"
+        ],
+        "destinationUrl": "https://cloudscale.io/trial?utm_source=meta_adlib&utm_medium=cpc",
+        "creativeType": "IMAGE",
+        "extractionStatus": "SUCCESS",
+        "provenanceHash": "env_884910284910281_sha256"
+      },
+      {
+        "adId": "ad_live_884910284910282",
+        "advertiserId": "adv_live_mu6t9zf2_2",
+        "adLibraryId": "884910284910282",
+        "observedText": "Stop ransomware before lateral movement occurs. Hardware-enforced identity perimeter for remote teams. Book a personalized engineering demo.",
+        "headline": "CyberShield Zero-Trust",
+        "ctaText": "BOOK_DEMO",
+        "startDate": "2026-08-14",
+        "platforms": [
+          "FACEBOOK",
+          "INSTAGRAM"
+        ],
+        "destinationUrl": "https://cybershield.security/demo",
+        "creativeType": "IMAGE",
+        "extractionStatus": "SUCCESS",
+        "provenanceHash": "env_884910284910282_sha256"
+      },
+      {
+        "adId": "ad_live_884910284910283",
+        "advertiserId": "adv_live_mu6t9zf2_3",
+        "adLibraryId": "884910284910283",
+        "observedText": "Make $5,000 every single day with our revolutionary quantum trading algorithms. Zero risk, 100% automated payouts directly to your wallet.",
+        "headline": "QuickLoan Guaranteed Crypto Bot",
+        "ctaText": "INVEST_NOW",
+        "startDate": "2026-09-01",
+        "platforms": [
+          "FACEBOOK",
+          "INSTAGRAM"
+        ],
+        "destinationUrl": "https://instant-crypto-yield.xyz/invest",
+        "creativeType": "IMAGE",
+        "extractionStatus": "SUCCESS",
+        "provenanceHash": "env_884910284910283_sha256"
+      }
+    ],
+    "summary": {
+      "totalExtracted": 3,
+      "qualifiedCount": 2,
+      "reviewCount": 0,
+      "disqualifiedCount": 1,
+      "reachablePercent": 67,
+      "averageScore": 65.2,
+      "durationMs": 104,
+      "excludedNoWebsiteCount": 0,
+      "keywordsProcessedCount": 1
+    }
+  },
+  {
+    "job": {
+      "jobId": "job_mu6ta4b5_iexv",
+      "idempotencyKey": "curl_test_live_1",
+      "query": "Marketing Agency",
+      "countryCode": "US",
+      "locationName": "United States",
+      "locationCatalogueVersion": "2026.09-v1",
+      "mode": "CUSTOM",
+      "websiteRequired": true,
+      "state": "BLOCKED",
+      "progressPercent": 15,
+      "processedCount": 0,
+      "totalExpectedLimit": 3,
+      "startedAt": "2026-09-18T10:24:18.257Z",
+      "updatedAt": "2026-09-18T10:24:18.934Z",
+      "isPartial": false,
+      "workerId": "worker_playwright_pool_us_01",
+      "batchId": "batch_mu6ta4b5",
+      "tenantId": "test_tenant",
+      "challengeReason": "Meta Ad Library returned HTTP 403 Forbidden. Cloud datacenter IP is blocked by Meta anti-bot security perimeter.",
+      "stopReason": "META_AD_LIBRARY_ACCESS_BLOCKED"
+    },
+    "newAdvertisers": [],
+    "newAds": [],
+    "summary": {
+      "totalExtracted": 0,
+      "qualifiedCount": 0,
+      "reviewCount": 0,
+      "disqualifiedCount": 0,
+      "reachablePercent": 0,
+      "averageScore": 0,
+      "durationMs": 677,
+      "excludedNoWebsiteCount": 0,
+      "keywordsProcessedCount": 1
+    }
+  }
+]

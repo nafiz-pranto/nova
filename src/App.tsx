@@ -90,13 +90,22 @@ export default function App() {
   };
 
   const handleWizardRunComplete = (result: ResearchExecutionResult) => {
-    setAdvertisers(prev => {
-      const existingIds = new Set(prev.map(a => a.advertiserId));
-      const filteredNew = result.newAdvertisers.filter(a => !existingIds.has(a.advertiserId));
-      return [...filteredNew, ...prev];
+    if (result.newAdvertisers && result.newAdvertisers.length > 0) {
+      setAdvertisers(prev => {
+        const existingIds = new Set(prev.map(a => a.advertiserId));
+        const filteredNew = result.newAdvertisers.filter(a => !existingIds.has(a.advertiserId));
+        return [...filteredNew, ...prev];
+      });
+    }
+    setJobs(prev => {
+      const filtered = prev.filter(j => j.jobId !== result.job.jobId);
+      return [result.job, ...filtered];
     });
-    setJobs(prev => [result.job, ...prev]);
-    handleNotify(`Research run completed: ${result.newAdvertisers.length} verified leads discovered with public websites.`);
+    if (result.job.state === 'BLOCKED') {
+      handleNotify(`Research job ${result.job.jobId} blocked: ${result.job.challengeReason || 'Browser execution unavailable'}`);
+    } else {
+      handleNotify(`Research run completed: ${result.newAdvertisers.length} verified leads discovered.`);
+    }
   };
 
   const handleSelectAdvertiser = (adv: AdvertiserViewModel) => {
@@ -226,6 +235,10 @@ export default function App() {
                   }}
                   onOpenWizard={() => {
                     setResearchTab('wizard');
+                  }}
+                  onLoadJobResults={(result) => {
+                    handleWizardRunComplete(result);
+                    setResearchTab('advertisers');
                   }}
                   advertisers={advertisers}
                   jobs={jobs}
