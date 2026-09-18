@@ -353,6 +353,42 @@ export function isUsableWebsite(url?: string): boolean {
   }
 }
 
+// Local standalone routing: All API routes resolve to same-origin local service
+function getApiUrl(path: string): string {
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
+async function extractResponseErrorMessage(res: Response): Promise<string> {
+  try {
+    const text = await res.text();
+    // Attempt JSON parse
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed.error && typeof parsed.error === 'object') {
+        return parsed.error.message || parsed.error.code || JSON.stringify(parsed.error);
+      }
+      if (parsed.error && typeof parsed.error === 'string') {
+        return parsed.error;
+      }
+      if (parsed.message) {
+        return parsed.message;
+      }
+    } catch {
+      // Not JSON, check if HTML error page
+      if (text.includes('<html') || text.includes('<!DOCTYPE') || text.includes('NOT_FOUND')) {
+        if (res.status === 404) {
+          return `Endpoint not found (HTTP 404). Verify that the server route is deployed and reachable.`;
+        }
+        return `Server returned HTTP ${res.status} ${res.statusText}`;
+      }
+      return text.trim() || res.statusText || `HTTP ${res.status}`;
+    }
+  } catch {
+    return res.statusText || `HTTP ${res.status}`;
+  }
+  return res.statusText || `HTTP ${res.status}`;
+}
+
 export class ResearchWorkflowRunner {
   /**
    * Instance method wrapper for executeRun
@@ -368,9 +404,10 @@ export class ResearchWorkflowRunner {
    * Fetches all persisted research jobs from the server.
    */
   public static async fetchJobs(): Promise<ResearchJobModel[]> {
-    const res = await fetch('/api/research/jobs');
+    const res = await fetch(getApiUrl('/api/research/jobs'));
     if (!res.ok) {
-      throw new Error(`Failed to fetch jobs from server: ${res.statusText}`);
+      const err = await extractResponseErrorMessage(res);
+      throw new Error(`Failed to fetch jobs from server (HTTP ${res.status}): ${err}`);
     }
     return res.json();
   }
@@ -388,9 +425,10 @@ export class ResearchWorkflowRunner {
     error?: string | null;
     challengeReason?: string | null;
   }> {
-    const res = await fetch(`/api/research/jobs/${encodeURIComponent(jobId)}/status`);
+    const res = await fetch(getApiUrl(`/api/research/jobs/${encodeURIComponent(jobId)}/status`));
     if (!res.ok) {
-      throw new Error(`Failed to fetch job status for ${jobId}: ${res.statusText}`);
+      const err = await extractResponseErrorMessage(res);
+      throw new Error(`Failed to fetch job status for ${jobId} (HTTP ${res.status}): ${err}`);
     }
     return res.json();
   }
@@ -399,9 +437,10 @@ export class ResearchWorkflowRunner {
    * Directly retrieves the finalized results of a completed or blocked research job.
    */
   public static async fetchJobResults(jobId: string): Promise<ResearchExecutionResult> {
-    const res = await fetch(`/api/research/jobs/${encodeURIComponent(jobId)}/results`);
+    const res = await fetch(getApiUrl(`/api/research/jobs/${encodeURIComponent(jobId)}/results`));
     if (!res.ok) {
-      throw new Error(`Failed to fetch job results for ${jobId}: ${res.statusText}`);
+      const err = await extractResponseErrorMessage(res);
+      throw new Error(`Failed to fetch job results for ${jobId} (HTTP ${res.status}): ${err}`);
     }
     return res.json();
   }
@@ -414,14 +453,15 @@ export class ResearchWorkflowRunner {
     request: ResearchWorkflowRequest,
     onProgress?: (event: WorkflowProgressEvent) => void
   ): Promise<ResearchExecutionResult> {
-    const response = await fetch('/api/research', {
+    const targetUrl = getApiUrl('/api/research');
+    const response = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request)
     });
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => response.statusText);
+      const errorText = await extractResponseErrorMessage(response);
       throw new Error(`Server returned HTTP ${response.status}: ${errorText}`);
     }
 
@@ -541,5 +581,16 @@ export class ResearchWorkflowRunner {
     }
 
     return result;
+  }
+
+  public static async cancelJob(jobId: string): Promise<boolean> {
+    try {
+      const res = await fetch(getApiUrl(`/api/research/jobs/${encodeURIComponent(jobId)}/cancel`), {
+        method: 'POST'
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   }
 }

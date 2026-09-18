@@ -1218,12 +1218,14 @@ export interface AdvertiserViewModel {
   canonicalName: string;
   facebookPageName?: string;
   facebookPageUrl?: string;
+  facebookPageState?: 'found' | 'not_found' | 'unknown';
   locationCode?: string;
   historicalNames: { name: string; observedAt: string; sourceTokenId: string }[];
   adLibraryId: string;
   activeAdCount: number;
   destinationDomain: string;
   destinationUrl: string;
+  websiteState?: 'found' | 'not_found' | 'unknown';
   matchedKeywords?: string[];
   sourcePresetId?: string;
   websiteReachable: boolean;

@@ -20,7 +20,9 @@ export interface ResearchExecutionResult {
   };
 }
 
-const DATA_DIR = path.resolve(process.cwd(), '.data');
+const DATA_DIR = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME
+  ? path.join('/tmp', '.data')
+  : path.resolve(process.cwd(), '.data');
 const JOBS_FILE = path.join(DATA_DIR, 'research_jobs.json');
 const RESULTS_FILE = path.join(DATA_DIR, 'research_results.json');
 

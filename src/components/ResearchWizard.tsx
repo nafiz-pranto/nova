@@ -8,7 +8,8 @@ import {
   ShieldAlert,
   ArrowRight,
   Terminal,
-  RefreshCw
+  RefreshCw,
+  Square
 } from 'lucide-react';
 import { 
   ResearchWorkflowRunner, 
@@ -54,6 +55,16 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
 
   const [latestResult, setLatestResult] = useState<ResearchExecutionResult | null>(null);
   const abortControllerRef = useRef<boolean>(false);
+  const activeJobIdRef = useRef<string | null>(null);
+
+  const handleStopResearch = async () => {
+    abortControllerRef.current = true;
+    if (activeJobIdRef.current) {
+      await ResearchWorkflowRunner.cancelJob(activeJobIdRef.current).catch(() => null);
+    }
+    setResearchState('IDLE');
+    setExecutionError('Research run was stopped by user.');
+  };
 
   const getAutoResearchName = () => {
     const locName = getLocationByCode(countryCode)?.displayName || countryCode;
@@ -142,6 +153,9 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
       const result = await ResearchWorkflowRunner.executeRun(
         request, 
         (progressEvent) => {
+          if (progressEvent.jobId) {
+            activeJobIdRef.current = progressEvent.jobId;
+          }
           setCurrentProgress(progressEvent);
           if (progressEvent.logMessage) {
             setProgressLogs(prev => [...prev.slice(-40), progressEvent.logMessage]);
@@ -219,40 +233,6 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
               </p>
             </div>
 
-            {/* Execution Strategy */}
-            <div>
-              <label className="block text-sm font-bold text-neutral-900 mb-2">
-                Execution Target
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setValidationMode('LIVE')}
-                  className={`p-3 text-left rounded-xl border transition-all ${
-                    validationMode === 'LIVE'
-                      ? 'border-purple-600 bg-purple-50/40 ring-1 ring-purple-600 text-neutral-900'
-                      : 'border-neutral-200 hover:border-neutral-300 text-neutral-600'
-                  }`}
-                >
-                  <div className="text-xs font-bold uppercase tracking-wider text-purple-700 mb-1">Live Meta Scraper</div>
-                  <div className="text-xs text-neutral-600">Connect directly to Meta Ad Library public interface.</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setValidationMode('CONTROLLED_FIXTURE')}
-                  className={`p-3 text-left rounded-xl border transition-all ${
-                    validationMode === 'CONTROLLED_FIXTURE'
-                      ? 'border-purple-600 bg-purple-50/40 ring-1 ring-purple-600 text-neutral-900'
-                      : 'border-neutral-200 hover:border-neutral-300 text-neutral-600'
-                  }`}
-                >
-                  <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">Controlled Fixture</div>
-                  <div className="text-xs text-neutral-600">Deterministic verified SaaS corpus for pipeline & result tests.</div>
-                </button>
-              </div>
-            </div>
-
             {researchMode === 'PRESET' ? (
               <div>
                 <label className="block text-sm font-bold text-neutral-900 mb-2">
@@ -272,7 +252,7 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
                   id="keywords-input"
                   value={keywordsInput}
                   onChange={(e) => setKeywordsInput(e.target.value)}
-                  placeholder="e.g. SaaS, CRM, Marketing Agency"
+                  placeholder="e.g. Furniture, Office Furniture, Home Furniture"
                   className="w-full h-24 p-3 text-sm bg-neutral-50 border border-neutral-300 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 placeholder:text-neutral-400 font-mono resize-none transition-colors"
                 />
                 <p className="text-xs text-neutral-500 mt-2">
@@ -337,6 +317,21 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
               <Play className="w-4 h-4 fill-current" />
               <span>START RESEARCH</span>
             </button>
+
+            {/* Local Scraper Engine Indicator */}
+            <div className="flex items-center justify-between text-xs text-neutral-400 pt-3 border-t border-neutral-100 font-mono">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                Local Engine: {validationMode === 'LIVE' ? 'Playwright + Chromium (Live Scraper)' : 'Controlled Fixture Mode'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setValidationMode(m => m === 'LIVE' ? 'CONTROLLED_FIXTURE' : 'LIVE')}
+                className="hover:text-neutral-700 underline cursor-pointer text-[11px]"
+              >
+                {validationMode === 'LIVE' ? 'Switch to offline fixture' : 'Switch to live browser'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -355,26 +350,20 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
             <div className="flex items-center gap-3">
               <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
               <div>
-                <h2 className="text-lg font-bold text-neutral-900">Research Job in Progress</h2>
+                <h2 className="text-lg font-bold text-neutral-900">Scraper in Progress</h2>
                 <p className="text-xs text-neutral-500">{stageName}</p>
               </div>
             </div>
-            <span className="font-mono text-sm font-bold text-purple-700">{percent}%</span>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="w-full bg-neutral-100 rounded-full h-2.5 overflow-hidden">
-            <div 
-              className="bg-purple-600 h-2.5 rounded-full transition-all duration-300"
-              style={{ width: `${percent}%` }}
-            />
+            <span className="font-mono text-xs font-bold text-neutral-600 bg-neutral-100 px-2.5 py-1 rounded-full">
+              {currentProgress?.processedCount || 0} unique leads found
+            </span>
           </div>
 
           {/* Real-time Streaming Logs */}
           <div className="bg-neutral-900 rounded-xl p-4 font-mono text-xs text-neutral-300 space-y-1.5 h-64 overflow-y-auto border border-neutral-800">
             <div className="flex items-center gap-2 text-neutral-500 pb-2 border-b border-neutral-800 mb-2">
               <Terminal className="w-3.5 h-3.5" />
-              <span>Execution DAG Event Stream</span>
+              <span>Scraper Activity Log</span>
             </div>
             {progressLogs.map((log, i) => (
               <div key={i} className="leading-relaxed">
@@ -384,6 +373,21 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
             {progressLogs.length === 0 && (
               <div className="text-neutral-600 italic">Waiting for initial scraper event stream from server...</div>
             )}
+          </div>
+
+          {/* Action Bar */}
+          <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
+            <span className="text-xs text-neutral-400 font-mono">
+              Mode: {validationMode === 'LIVE' ? 'Playwright Headless Browser' : 'Controlled Validation Fixture'}
+            </span>
+            <button
+              type="button"
+              onClick={handleStopResearch}
+              className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg border border-rose-200 transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+            >
+              <Square className="w-3.5 h-3.5 fill-current" />
+              <span>STOP RESEARCH</span>
+            </button>
           </div>
         </div>
       </div>
@@ -451,11 +455,13 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
 
   // 4. COMPLETE VIEW (Verified Leads Table)
   if (researchState === 'COMPLETE' && latestResult) {
-    const websiteFoundCount = latestResult.newAdvertisers.filter(a => a.destinationUrl).length;
-    const websiteNotFoundCount = latestResult.newAdvertisers.length - websiteFoundCount;
+    const websiteFoundCount = latestResult.newAdvertisers.filter(a => a.websiteState === 'found' || Boolean(a.destinationUrl)).length;
+    const websiteNotFoundCount = latestResult.newAdvertisers.filter(a => a.websiteState === 'not_found' || (!a.websiteState && !a.destinationUrl)).length;
+    const websiteUnknownCount = latestResult.newAdvertisers.filter(a => a.websiteState === 'unknown').length;
     
-    const fbFoundCount = latestResult.newAdvertisers.filter(a => a.facebookPageName || a.facebookPageUrl || a.adLibraryId).length;
-    const fbNotFoundCount = latestResult.newAdvertisers.length - fbFoundCount;
+    const fbFoundCount = latestResult.newAdvertisers.filter(a => a.facebookPageState === 'found' || Boolean(a.facebookPageName || a.adLibraryId)).length;
+    const fbNotFoundCount = latestResult.newAdvertisers.filter(a => a.facebookPageState === 'not_found').length;
+    const fbUnknownCount = latestResult.newAdvertisers.filter(a => a.facebookPageState === 'unknown').length;
 
     return (
       <div className="max-w-6xl mx-auto py-8 px-6 space-y-6">
@@ -466,7 +472,7 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
               Research Complete
             </h1>
             <p className="mt-1 text-sm text-neutral-600">
-              <span className="font-bold text-neutral-900">{latestResult.newAdvertisers.length} LEADS FOUND</span> out of {maxResults} requested.
+              <span className="font-bold text-neutral-900">{latestResult.newAdvertisers.length} UNIQUE LEADS</span> out of {maxResults} requested.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -494,20 +500,26 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-xl border border-neutral-200">
-            <div className="text-[10px] uppercase font-bold text-neutral-500 mb-1">Website</div>
-            <div className="text-lg font-bold text-neutral-900">{websiteFoundCount} found</div>
-          </div>
-          <div className="bg-white p-4 rounded-xl border border-neutral-200">
-            <div className="text-[10px] uppercase font-bold text-neutral-500 mb-1">Website</div>
-            <div className="text-lg font-bold text-neutral-500">{websiteNotFoundCount} not found</div>
+            <div className="text-[10px] uppercase font-bold text-neutral-500 mb-1">Website Detection</div>
+            <div className="text-lg font-bold text-emerald-700">{websiteFoundCount} Found</div>
+            <div className="text-xs text-neutral-500 mt-0.5">{websiteNotFoundCount} Not Found{websiteUnknownCount > 0 ? ` • ${websiteUnknownCount} Unknown` : ''}</div>
           </div>
           <div className="bg-white p-4 rounded-xl border border-neutral-200">
             <div className="text-[10px] uppercase font-bold text-neutral-500 mb-1">Facebook Page</div>
-            <div className="text-lg font-bold text-neutral-900">{fbFoundCount} found</div>
+            <div className="text-lg font-bold text-neutral-900">{fbFoundCount} Found</div>
+            <div className="text-xs text-neutral-500 mt-0.5">{fbNotFoundCount} Not Found{fbUnknownCount > 0 ? ` • ${fbUnknownCount} Unknown` : ''}</div>
           </div>
           <div className="bg-white p-4 rounded-xl border border-neutral-200">
-            <div className="text-[10px] uppercase font-bold text-neutral-500 mb-1">Facebook Page</div>
-            <div className="text-lg font-bold text-neutral-500">{fbNotFoundCount} not found / unknown</div>
+            <div className="text-[10px] uppercase font-bold text-neutral-500 mb-1">Unique Advertisers</div>
+            <div className="text-lg font-bold text-purple-700">{latestResult.newAdvertisers.length} Deduplicated</div>
+            <div className="text-xs text-neutral-500 mt-0.5">1 lead per identified business</div>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-neutral-200">
+            <div className="text-[10px] uppercase font-bold text-neutral-500 mb-1">Total Active Ads</div>
+            <div className="text-lg font-bold text-neutral-900">
+              {latestResult.newAdvertisers.reduce((acc, a) => acc + (a.activeAdCount || 1), 0)}
+            </div>
+            <div className="text-xs text-neutral-500 mt-0.5">Extracted from public Ad Library</div>
           </div>
         </div>
 
@@ -520,7 +532,7 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
                   <th className="px-5 py-3">Facebook Page</th>
                   <th className="px-5 py-3">Website</th>
                   <th className="px-5 py-3">Ads</th>
-                  <th className="px-5 py-3">Keyword</th>
+                  <th className="px-5 py-3">Matched Keyword</th>
                   <th className="px-5 py-3">Location</th>
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3 text-right">Actions</th>
@@ -533,26 +545,30 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
                       <div className="font-bold text-neutral-900">{adv.canonicalName}</div>
                     </td>
                     <td className="px-5 py-3.5">
-                      {adv.facebookPageName || adv.adLibraryId ? (
+                      {adv.facebookPageState === 'found' || Boolean(adv.facebookPageName || adv.adLibraryId) ? (
                         <div className="flex items-center gap-1.5 text-neutral-700">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                           <span>Found</span>
                         </div>
+                      ) : adv.facebookPageState === 'unknown' ? (
+                        <span className="text-amber-700 font-medium text-xs">Unknown</span>
                       ) : (
                         <div className="text-neutral-400 italic">Not found</div>
                       )}
                     </td>
                     <td className="px-5 py-3.5">
-                      {adv.destinationUrl ? (
+                      {adv.destinationUrl && (adv.websiteState === 'found' || !adv.websiteState) ? (
                         <a 
                           href={adv.destinationUrl} 
                           target="_blank" 
                           rel="noreferrer noopener"
                           className="font-mono text-emerald-700 hover:underline flex items-center gap-1"
                         >
-                          {adv.destinationDomain}
+                          {adv.destinationDomain || adv.destinationUrl}
                           <ExternalLink className="w-3 h-3 text-neutral-400" />
                         </a>
+                      ) : adv.websiteState === 'unknown' ? (
+                        <span className="text-amber-700 font-medium text-xs">Unknown</span>
                       ) : (
                         <span className="text-neutral-400 italic">Not found</span>
                       )}

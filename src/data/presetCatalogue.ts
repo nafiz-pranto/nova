@@ -720,10 +720,21 @@ export const RESEARCH_PRESETS: ResearchPreset[] = [
 ];
 
 /**
- * Retrieve a preset by its unique ID.
+ * Retrieve a preset by its unique ID, name, or alias.
  */
 export function getPresetById(presetId: string): ResearchPreset | undefined {
-  return RESEARCH_PRESETS.find(p => p.preset_id === presetId);
+  if (!presetId) return undefined;
+  const exact = RESEARCH_PRESETS.find(p => p.preset_id === presetId);
+  if (exact) return exact;
+  const lower = presetId.toLowerCase().trim();
+  return RESEARCH_PRESETS.find(p => 
+    p.preset_id.toLowerCase() === lower ||
+    p.preset_id.toLowerCase().replace(/_/g, ' ') === lower ||
+    p.name.toLowerCase() === lower ||
+    p.aliases?.some(a => a.toLowerCase() === lower) ||
+    p.aliases?.some(a => a.toLowerCase().replace(/\s+/g, '_') === lower) ||
+    p.name.toLowerCase().includes(lower)
+  );
 }
 
 /**

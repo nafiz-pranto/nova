@@ -303,6 +303,27 @@ export async function checkBrowserAvailability(): Promise<boolean> {
   }
 }
 
+const activeJobAbortControllers = new Map<string, () => void>();
+
+export function cancelJob(jobId: string): boolean {
+  const abort = activeJobAbortControllers.get(jobId);
+  if (abort) {
+    abort();
+    activeJobAbortControllers.delete(jobId);
+    return true;
+  }
+  const job = researchJobStore.getJob(jobId);
+  if (job && ['STARTING', 'NAVIGATING', 'COLLECTING', 'VALIDATING'].includes(job.state)) {
+    researchJobStore.updateJob(jobId, {
+      state: 'CANCELLED',
+      stopReason: 'CANCELLED_BY_OPERATOR',
+      updatedAt: new Date().toISOString()
+    });
+    return true;
+  }
+  return false;
+}
+
 /**
  * Executes an end-to-end research collection run against public Meta Ad Library data
  * or via controlled execution fixture for pipeline validation.
@@ -314,6 +335,11 @@ export async function runBrowserWorker(
   const startTime = Date.now();
   const jobId = `job_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
   const batchId = `batch_${Date.now().toString(36)}`;
+
+  let isAborted = false;
+  activeJobAbortControllers.set(jobId, () => {
+    isAborted = true;
+  });
 
   // 1. Check idempotency
   if (request.idempotencyKey) {
@@ -366,11 +392,12 @@ export async function runBrowserWorker(
 
   const websiteRequired = request.websiteRequired !== false;
   const targetLimit = Math.max(1, Math.min(1000, request.maxResults || 10));
+  const effectiveIdempotencyKey = request.idempotencyKey || `idemp_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
 
   // Initialize and persist Job in store with state STARTING
   const initialJob: ResearchJobModel = {
     jobId,
-    idempotencyKey: request.idempotencyKey,
+    idempotencyKey: effectiveIdempotencyKey,
     query: request.researchName ? `${request.researchName} (${keywordsList.join(', ')})` : keywordsList.join(', '),
     countryCode: cleanLocationCode,
     locationName: locationDisplayName,
@@ -400,7 +427,7 @@ export async function runBrowserWorker(
     percent: 5,
     processedCount: 0,
     totalLimit: targetLimit,
-    logMessage: `[00:00:01] Job ${jobId} enqueued with idempotency key ${request.idempotencyKey.slice(0, 14)}... Target location: ${locationDisplayName} (${cleanLocationCode}). Mode: ${request.mode || 'CUSTOM'}${request.presetId ? ` [Preset: ${request.presetId}]` : ''}. Keywords: ${keywordsList.join(', ')}.`
+    logMessage: `[00:00:01] Job ${jobId} enqueued with idempotency key ${effectiveIdempotencyKey.slice(0, 14)}... Target location: ${locationDisplayName} (${cleanLocationCode}). Mode: ${request.mode || 'CUSTOM'}${request.presetId ? ` [Preset: ${request.presetId}]` : ''}. Keywords: ${keywordsList.join(', ')}.`
   });
 
   await new Promise(r => setTimeout(r, 100));
@@ -602,6 +629,45 @@ export async function runBrowserWorker(
   // Process candidate items through the 6-stage DAG
   for (let i = 0; i < rawCandidateItems.length; i++) {
     if (discoveredAdvertisers.length >= targetLimit) break;
+
+    // Check cancellation
+    if (isAborted) {
+      activeJobAbortControllers.delete(jobId);
+      const cancelledJob: ResearchJobModel = {
+        ...initialJob,
+        state: 'CANCELLED',
+        progressPercent: Math.round(25 + ((i) / Math.min(rawCandidateItems.length, targetLimit)) * 65),
+        stopReason: 'CANCELLED_BY_OPERATOR',
+        updatedAt: new Date().toISOString()
+      };
+      researchJobStore.saveJob(cancelledJob);
+      const cancelledResult: ResearchExecutionResult = {
+        job: cancelledJob,
+        newAdvertisers: discoveredAdvertisers,
+        newAds: discoveredAds,
+        summary: {
+          totalExtracted: discoveredAdvertisers.length,
+          qualifiedCount: discoveredAdvertisers.filter(a => a.qualificationState === 'QUALIFIED').length,
+          reviewCount: discoveredAdvertisers.filter(a => a.qualificationState === 'REVIEW_REQUIRED').length,
+          disqualifiedCount: discoveredAdvertisers.filter(a => a.qualificationState === 'DISQUALIFIED').length,
+          reachablePercent: 0,
+          averageScore: 0,
+          durationMs: Date.now() - startTime,
+          excludedNoWebsiteCount,
+          keywordsProcessedCount: keywordsList.length
+        }
+      };
+      researchJobStore.saveResult(jobId, cancelledResult);
+      emitEvent({
+        type: 'cancelled',
+        jobId,
+        status: 'CANCELLED',
+        job: cancelledJob,
+        result: cancelledResult
+      });
+      return cancelledResult;
+    }
+
     const item = rawCandidateItems[i];
     const progressPercent = Math.round(25 + ((i + 1) / Math.min(rawCandidateItems.length, targetLimit)) * 65);
 
@@ -681,6 +747,8 @@ export async function runBrowserWorker(
       activeAdCount: item.activeAdCount,
       destinationDomain: item.destinationUrl ? new URL(item.destinationUrl).hostname : '',
       destinationUrl: item.destinationUrl,
+      websiteState: usableWebsite ? 'found' : (item.destinationUrl ? 'unknown' : 'not_found'),
+      facebookPageState: (item.pageName && item.adLibraryId) ? 'found' : 'not_found',
       matchedKeywords: keywordsList.slice(0, 3),
       sourcePresetId: request.presetId,
       websiteReachable: item.websiteStatus === 200,
@@ -820,5 +888,6 @@ export async function runBrowserWorker(
     job: completedJob
   });
 
+  activeJobAbortControllers.delete(jobId);
   return finalResult;
 }
