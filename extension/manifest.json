@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Meta Ad Library Lead Scraper",
+  "version": "1.0.0",
+  "description": "Local standalone Meta Ad Library scraper Chrome extension for public lead research.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://www.facebook.com/ads/library/*",
+    "https://web.facebook.com/ads/library/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Open Lead Scraper",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.facebook.com/ads/library/*",
+        "https://web.facebook.com/ads/library/*"
+      ],
+      "js": [
+        "content-script.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}

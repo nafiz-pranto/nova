@@ -193,11 +193,22 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
   if (researchState === 'IDLE' || researchState === 'ERROR') {
     return (
       <div className="max-w-2xl mx-auto py-12 px-6">
-        <div className="mb-10 text-center">
+        <div className="mb-8 text-center">
           <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">New Research</h1>
           <p className="mt-3 text-sm text-neutral-500 max-w-lg mx-auto">
             Choose what you want to research, select a location, and let the scraper gather verified leads.
           </p>
+
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-left flex items-start gap-3 shadow-xs">
+            <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+              MV3
+            </div>
+            <div className="text-xs text-blue-900">
+              <span className="font-bold">Standalone Chrome Extension Scraper Ready:</span>{' '}
+              Load <code className="px-1 py-0.5 bg-blue-100/80 rounded font-mono text-blue-950 font-semibold">./extension</code> in Chrome via{' '}
+              <span className="font-semibold">chrome://extensions</span> &rarr; <span className="font-semibold">Load unpacked</span>. It scrapes Meta Ad Library directly inside your browser without external servers or paid APIs.
+            </div>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
