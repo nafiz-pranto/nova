@@ -4,7 +4,7 @@
  */
 
 import { checkForBotChallenge, extractAdCardsFromDocument } from './metaAdapter.ts';
-import { ExtensionMessage } from './types.ts';
+import type { ExtensionMessage } from './types.ts';
 
 console.log('[Meta Ad Library Scraper] Content script active on:', window.location.href);
 
@@ -34,7 +34,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
       if (challenge.isBlocked) {
         sendResponse({
           type: 'CHALLENGE_DETECTED',
-          reason: challenge.reason
+          reason: challenge.reason,
+          code: challenge.code || 'CHALLENGED'
         });
         return true;
       }

@@ -74,9 +74,13 @@ export const ExtensionApp: React.FC = () => {
 
   const loadStateFromStorage = () => {
     if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-      chrome.storage.local.get(['activeResearchRun'], (res) => {
-        if (res.activeResearchRun) {
-          setActiveRun(res.activeResearchRun);
+      chrome.storage.local.get(['activeResearchRun', 'meta_scraper_active_run'], (res: Record<string, any>) => {
+        const run = (res.activeResearchRun || res.meta_scraper_active_run) as ExtensionResearchRun | undefined;
+        if (run) {
+          setActiveRun(run);
+          if (run.leads && run.leads.length > 0) {
+            setActiveTab('RESULTS');
+          }
         }
       });
       loadHistory();
@@ -85,9 +89,10 @@ export const ExtensionApp: React.FC = () => {
 
   const loadHistory = () => {
     if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-      chrome.storage.local.get(['researchHistory'], (res) => {
-        if (Array.isArray(res.researchHistory)) {
-          setHistoryRuns(res.researchHistory);
+      chrome.storage.local.get(['researchHistory', 'meta_scraper_history'], (res: Record<string, any>) => {
+        const hist = (res.researchHistory || res.meta_scraper_history) as ExtensionResearchRun[] | undefined;
+        if (Array.isArray(hist)) {
+          setHistoryRuns(hist);
         }
       });
     }
@@ -188,10 +193,10 @@ export const ExtensionApp: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleExportCsv = (leads: ExtensionLead[]) => {
+  const handleExportCsv = (leads: ExtensionLead[], run?: ExtensionResearchRun) => {
     if (!leads || leads.length === 0) return;
-    const csvData = exportLeadsToCsv(leads);
-    const fileName = `meta_ad_library_leads_${Date.now()}.csv`;
+    const csvData = exportLeadsToCsv(leads, run);
+    const fileName = `meta_ad_library_leads_${run ? run.runId : Date.now()}.csv`;
     downloadFile(csvData, fileName, 'text/csv;charset=utf-8;');
   };
 
@@ -202,6 +207,59 @@ export const ExtensionApp: React.FC = () => {
   };
 
   const isRunning = activeRun && (activeRun.status === 'STARTING' || activeRun.status === 'NAVIGATING' || activeRun.status === 'COLLECTING' || activeRun.status === 'NORMALIZING');
+  const isStale = activeRun && activeRun.status === 'RECOVERY_REQUIRED';
+
+  const formatStatus = (status: string): string => {
+    switch (status) {
+      case 'STARTING': return 'Initializing';
+      case 'NAVIGATING': return 'Loading Search';
+      case 'COLLECTING': return 'Extracting Ads';
+      case 'NORMALIZING': return 'Filtering Relevance';
+      case 'COMPLETED': return 'Completed';
+      case 'PARTIAL': return 'Partial Result';
+      case 'CANCELLED': return 'Cancelled';
+      case 'BROWSER_TAB_CLOSED': return 'Ad Library Tab Closed';
+      case 'BROWSER_INTERRUPTED': return 'Session Interrupted';
+      case 'BLOCKED': return 'Access Restricted';
+      case 'RATE_LIMITED': return 'Meta Access Rate-Limited';
+      case 'CHALLENGED': return 'Meta Security Check Required';
+      case 'FAILED': return 'Failed';
+      case 'RECOVERY_REQUIRED': return 'Incomplete Session (Recovery Needed)';
+      default: return status.replace(/_/g, ' ');
+    }
+  };
+
+  const formatStopReason = (reason?: string): string => {
+    if (!reason) return '';
+    switch (reason) {
+      case 'TARGET_REACHED': return 'Target Quota Reached';
+      case 'SOURCE_EXHAUSTED':
+      case 'SOURCE_EXHAUSTED_VERIFIED': return 'Search Results Exhausted';
+      case 'SOURCE_PROGRESS_STALLED': return 'Ad Library Stalled — No New Ads Observed';
+      case 'NO_NEW_RESULTS_OBSERVED': return 'No Ads Observed for Query';
+      case 'USER_CANCELLED': return 'Cancelled by User';
+      case 'BROWSER_TAB_CLOSED': return 'Ad Library Tab Closed';
+      case 'BROWSER_INTERRUPTED':
+      case 'STALE_JOB_TIMEOUT': return 'Session Interrupted';
+      case 'CHALLENGED':
+      case 'CHALLENGE_DETECTED': return 'Meta Security Check Required';
+      case 'RATE_LIMITED': return 'Meta Access Rate-Limited';
+      case 'FAILED':
+      case 'FATAL_ERROR': return 'Unrecoverable Execution Error';
+      default: return reason.replace(/_/g, ' ');
+    }
+  };
+
+  const formatEvidenceType = (type: string): string => {
+    switch (type) {
+      case 'ENTITY_IDENTITY': return 'Business Identity';
+      case 'CATEGORY_MATCH': return 'Industry Match';
+      case 'COMMERCIAL_INTENT': return 'Commercial Intent';
+      case 'NEGATIVE_CATEGORY': return 'Category Conflict';
+      case 'CONTRADICTION': return 'Hard Contradiction';
+      default: return type.replace(/_/g, ' ');
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen w-full bg-slate-900 text-slate-100 text-xs antialiased font-sans select-none overflow-hidden">
@@ -272,9 +330,36 @@ export const ExtensionApp: React.FC = () => {
       {/* Main Container */}
       <main className="flex-1 overflow-y-auto p-3 space-y-3">
         {statusMessage && (
-          <div className="p-2 bg-blue-950/60 border border-blue-800/60 rounded text-[11px] text-blue-200 flex items-start gap-2">
-            <RefreshCw className="w-3.5 h-3.5 mt-0.5 text-blue-400 flex-shrink-0 animate-spin" />
+          <div className={`p-2 border rounded text-[11px] flex items-start gap-2 ${
+            statusMessage.includes('Failed') || statusMessage.includes('Error') || statusMessage.includes('blocked')
+              ? 'bg-rose-950/60 border-rose-800/60 text-rose-200'
+              : 'bg-blue-950/60 border-blue-800/60 text-blue-200'
+          }`}>
+            {isRunning ? (
+              <RefreshCw className="w-3.5 h-3.5 mt-0.5 text-blue-400 flex-shrink-0 animate-spin" />
+            ) : (
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 text-amber-400 flex-shrink-0" />
+            )}
             <div className="break-words">{statusMessage}</div>
+          </div>
+        )}
+
+        {isStale && (
+          <div className="p-3 bg-amber-950/60 border border-amber-800/60 rounded-lg space-y-2">
+            <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs">
+              <AlertTriangle className="w-4 h-4" />
+              Incomplete Research Detected
+            </div>
+            <p className="text-[10px] text-amber-200/80 leading-relaxed">
+              The previous research session was interrupted (browser restart or service worker timeout). 
+              Leads collected so far are preserved. You can start a new research to continue.
+            </p>
+            <button
+              onClick={() => setActiveTab('RESEARCH')}
+              className="px-3 py-1 bg-amber-700 hover:bg-amber-600 text-white rounded text-[10px] font-medium transition-colors"
+            >
+              Configure New Run
+            </button>
           </div>
         )}
 
@@ -434,11 +519,14 @@ export const ExtensionApp: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
                         activeRun.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-300 border border-emerald-700' :
+                        activeRun.status === 'PARTIAL' ? 'bg-amber-950/80 text-amber-300 border border-amber-700/80' :
                         activeRun.status === 'CANCELLED' ? 'bg-amber-950 text-amber-300 border border-amber-700' :
                         activeRun.status === 'BLOCKED' ? 'bg-rose-950 text-rose-300 border border-rose-700' :
+                        activeRun.status === 'RECOVERY_REQUIRED' ? 'bg-amber-950/50 text-amber-400 border border-amber-700/50' :
+                        activeRun.status === 'FAILED' ? 'bg-rose-950 text-rose-300 border border-rose-700' :
                         'bg-blue-950 text-blue-300 border border-blue-700 animate-pulse'
                       }`}>
-                        {activeRun.status}
+                        {formatStatus(activeRun.status)}
                       </span>
                     </div>
                   </div>
@@ -474,7 +562,13 @@ export const ExtensionApp: React.FC = () => {
                       </button>
                     ) : (
                       <div className="text-[10px] text-slate-400">
-                        {activeRun.leads.length >= activeRun.maxResults ? '✓ Full quota reached' : 'Research stopped'}
+                        {activeRun.stopReason ? (
+                          <span className="text-slate-300 font-medium">({formatStopReason(activeRun.stopReason)})</span>
+                        ) : activeRun.leads.length >= activeRun.maxResults ? (
+                          '✓ Target quota reached'
+                        ) : (
+                          'Research stopped'
+                        )}
                       </div>
                     )}
 
@@ -482,7 +576,7 @@ export const ExtensionApp: React.FC = () => {
                       <button
                         type="button"
                         disabled={activeRun.leads.length === 0}
-                        onClick={() => handleExportCsv(activeRun.leads)}
+                        onClick={() => handleExportCsv(activeRun.leads, activeRun)}
                         className="px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 rounded text-[10px] flex items-center gap-1"
                         title="Export RFC-4180 CSV with Formula Injection Protection"
                       >
@@ -505,8 +599,10 @@ export const ExtensionApp: React.FC = () => {
                 {/* Leads List */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300 px-1">
-                    <span>Discovered Leads ({activeRun.leads.length})</span>
-                    <span className="text-[9px] text-slate-500 font-normal">Click a lead to inspect</span>
+                    <span>Relevant Leads ({activeRun.leads.length})</span>
+                    <span className="text-[9px] text-slate-400 font-normal">
+                      {activeRun.rejectedLeadsCount ? `${activeRun.rejectedLeadsCount} irrelevant excluded` : 'Click lead to inspect'}
+                    </span>
                   </div>
 
                   {activeRun.leads.length === 0 ? (
@@ -526,9 +622,16 @@ export const ExtensionApp: React.FC = () => {
                           <div className="font-semibold text-slate-100 text-xs truncate max-w-[220px]">
                             {lead.name}
                           </div>
-                          <span className="px-1.5 py-0.2 bg-blue-950 border border-blue-800 text-blue-300 rounded text-[9px] font-mono whitespace-nowrap">
-                            {lead.activeAdCount} {lead.activeAdCount === 1 ? 'ad' : 'ads'}
-                          </span>
+                          <div className="flex items-center gap-1">
+                            {lead.relevanceDecision && (
+                              <span className="px-1.5 py-0.2 bg-emerald-950 border border-emerald-800 text-emerald-300 rounded text-[9px] font-mono whitespace-nowrap">
+                                {lead.relevanceDecision} ({Math.round((lead.relevanceScore || 1) * 100)}%)
+                              </span>
+                            )}
+                            <span className="px-1.5 py-0.2 bg-blue-950 border border-blue-800 text-blue-300 rounded text-[9px] font-mono whitespace-nowrap">
+                              {lead.activeAdCount} {lead.activeAdCount === 1 ? 'ad' : 'ads'}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Page & Website State badges */}
@@ -651,6 +754,67 @@ export const ExtensionApp: React.FC = () => {
                           </div>
                         </div>
                       )}
+
+                      {/* Relevance Audit Trail */}
+                      {selectedLead.relevanceDecision && (
+                        <div className="mt-1.5 pt-1.5 border-t border-slate-800 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-slate-400 font-semibold">Strict Relevance Gate:</span>
+                              <span className="px-1.5 py-0.2 bg-blue-950/80 border border-blue-800/80 text-blue-300 rounded text-[8px] font-mono">
+                                {selectedLead.engineVersion || 'strict-v2'}
+                              </span>
+                            </div>
+                            <span className="px-1.5 py-0.2 bg-emerald-950 border border-emerald-800 text-emerald-300 rounded text-[9px]">
+                              {selectedLead.relevanceDecision} ({selectedLead.relevanceConfidence || 'HIGH'}) • {Math.round((selectedLead.relevanceScore || 1) * 100)}%
+                            </span>
+                          </div>
+
+                          {selectedLead.relevanceMatchedTerms && selectedLead.relevanceMatchedTerms.length > 0 && (
+                            <div className="text-[9px] text-slate-400">
+                              <span className="text-slate-500">Matched Category Terms: </span>
+                              <span className="text-blue-300">{selectedLead.relevanceMatchedTerms.join(', ')}</span>
+                            </div>
+                          )}
+
+                          {selectedLead.relevanceReasons && selectedLead.relevanceReasons.length > 0 && (
+                            <div className="space-y-0.5 mt-1 bg-slate-900/90 p-1.5 rounded border border-slate-800/80">
+                              <span className="text-[9px] text-slate-500 block">Evaluation & Signals:</span>
+                              {selectedLead.relevanceReasons.map((r, i) => (
+                                <div key={i} className="text-[9px] text-slate-300 flex items-start gap-1">
+                                  <span className="text-emerald-400">•</span>
+                                  <span>{r}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {selectedLead.relevanceEvidence && selectedLead.relevanceEvidence.length > 0 && (
+                            <div className="space-y-1 mt-1">
+                              <span className="text-[9px] text-slate-500 block">Verified Evidence Breakdown:</span>
+                              <div className="flex flex-wrap gap-1">
+                                {selectedLead.relevanceEvidence.map((ev, i) => (
+                                  <span
+                                    key={i}
+                                    className={`px-1.5 py-0.5 rounded text-[8px] font-mono border ${
+                                      ev.type === 'ENTITY_IDENTITY'
+                                        ? 'bg-blue-950/60 border-blue-800/60 text-blue-300'
+                                        : ev.type === 'CATEGORY_MATCH'
+                                        ? 'bg-emerald-950/60 border-emerald-800/60 text-emerald-300'
+                                        : ev.type === 'COMMERCIAL_INTENT'
+                                        ? 'bg-amber-950/60 border-amber-800/60 text-amber-300'
+                                        : 'bg-slate-800 border-slate-700 text-slate-300'
+                                    }`}
+                                    title={ev.reason}
+                                  >
+                                    {formatEvidenceType(ev.type)}: {ev.strength}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -701,14 +865,18 @@ export const ExtensionApp: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-white text-xs">{run.researchName}</span>
                     <span className={`px-1.5 py-0.2 rounded text-[9px] font-semibold uppercase ${
-                      run.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-300' : 'bg-slate-800 text-slate-400'
+                      run.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-300' : 
+                      run.status === 'PARTIAL' ? 'bg-amber-950/80 text-amber-300' : 
+                      run.status === 'CANCELLED' ? 'bg-amber-950 text-amber-300' :
+                      run.status === 'RECOVERY_REQUIRED' ? 'bg-amber-900 text-amber-200' :
+                      'bg-slate-800 text-slate-400'
                     }`}>
-                      {run.status}
+                      {formatStatus(run.status)}
                     </span>
                   </div>
 
                   <div className="text-[10px] text-slate-400 flex items-center justify-between">
-                    <span>{run.locationName} • {run.leads.length} leads</span>
+                    <span>{run.locationName} • {run.leads.length} of {run.targetLeadCount || run.maxResults} leads</span>
                     <span>{new Date(run.startedAt).toLocaleDateString()}</span>
                   </div>
 
@@ -726,7 +894,7 @@ export const ExtensionApp: React.FC = () => {
                     <button
                       type="button"
                       disabled={run.leads.length === 0}
-                      onClick={() => handleExportCsv(run.leads)}
+                      onClick={() => handleExportCsv(run.leads, run)}
                       className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-emerald-400 rounded text-[10px] flex items-center gap-1"
                     >
                       <FileSpreadsheet className="w-2.5 h-2.5" />

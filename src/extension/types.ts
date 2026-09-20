@@ -14,7 +14,68 @@ export type JobStatus =
   | 'PARTIAL'
   | 'CANCELLED'
   | 'BLOCKED'
-  | 'FAILED';
+  | 'FAILED'
+  | 'RECOVERY_REQUIRED'
+  | 'BROWSER_TAB_CLOSED'
+  | 'BROWSER_INTERRUPTED'
+  | 'RATE_LIMITED'
+  | 'CHALLENGED';
+
+export type ResearchStopReason =
+  | 'TARGET_REACHED'
+  | 'SOURCE_EXHAUSTED'
+  | 'SOURCE_EXHAUSTED_VERIFIED'
+  | 'SOURCE_PROGRESS_STALLED'
+  | 'NO_NEW_RESULTS_OBSERVED'
+  | 'USER_CANCELLED'
+  | 'BROWSER_INTERRUPTED'
+  | 'BROWSER_TAB_CLOSED'
+  | 'RATE_LIMITED'
+  | 'CHALLENGED'
+  | 'CHALLENGE_DETECTED'
+  | 'STALE_JOB_TIMEOUT'
+  | 'FAILED'
+  | 'FATAL_ERROR';
+
+export type RelevanceDecision = 'RELEVANT' | 'UNCERTAIN' | 'NOT_RELEVANT';
+export type RelevanceConfidence = 'HIGH' | 'MEDIUM' | 'LOW';
+export type EvidenceStrength = 'STRONG' | 'MODERATE' | 'WEAK';
+
+export type EvidenceType =
+  | 'ENTITY_IDENTITY'
+  | 'CATEGORY_MATCH'
+  | 'COMMERCIAL_INTENT'
+  | 'NEGATIVE_CATEGORY'
+  | 'CONTRADICTION';
+
+export type EvidenceSource =
+  | 'advertiser_name'
+  | 'ad_text'
+  | 'destination_url'
+  | 'destination_domain'
+  | 'facebook_page'
+  | 'cta_text'
+  | 'entity_aggregation';
+
+export interface StructuredEvidence {
+  type: EvidenceType;
+  strength: EvidenceStrength;
+  source: EvidenceSource;
+  reason: string;
+  matchedSignal?: string;
+  reasonCode?: string;
+}
+
+export interface RunCounters {
+  rawAds: number;
+  normalizedCandidates: number;
+  relevantCandidates: number;
+  uncertainCandidates: number;
+  notRelevantCandidates: number;
+  duplicatesRemoved: number;
+  finalUniqueLeads: number;
+  reasonCodes?: Record<string, number>;
+}
 
 export interface ScrapedAdCandidate {
   libraryId: string;
@@ -52,6 +113,16 @@ export interface ExtensionLead {
   discoveredAt: string;
   sampleCopy?: string;
   sampleCta?: string;
+  // Relevance evaluation fields
+  relevanceScore?: number;
+  relevanceDecision?: RelevanceDecision;
+  relevanceConfidence?: RelevanceConfidence;
+  relevanceReasons?: string[];
+  relevanceMatchedTerms?: string[];
+  relevanceEvidence?: StructuredEvidence[];
+  relevanceStrategyVersion?: number;
+  engineVersion?: string;
+  presetVersion?: string;
 }
 
 export interface ExtensionResearchRun {
@@ -68,6 +139,11 @@ export interface ExtensionResearchRun {
   stopReason?: string;
   challengeReason?: string;
   leads: ExtensionLead[];
+  rejectedLeadsCount?: number;
+  uncertainLeadsCount?: number;
+  relevanceStrategyVersion?: number;
+  engineVersion?: string;
+  counters?: RunCounters;
   logs: Array<{
     timestamp: string;
     message: string;
@@ -75,7 +151,10 @@ export interface ExtensionResearchRun {
   }>;
   startedAt: string;
   completedAt?: string;
+  lastUpdatedAt: string;
+  schemaVersion: number;
   totalAdsInspected: number;
+  allCandidates?: ScrapedAdCandidate[];
   targetLeadCount: number;
   activeKeywordIndex?: number;
 }
@@ -95,6 +174,7 @@ export interface ExtensionMessage {
   type:
     | 'START_RESEARCH'
     | 'STOP_RESEARCH'
+    | 'CANCEL_RESEARCH'
     | 'GET_STATE'
     | 'GET_HISTORY'
     | 'CLEAR_HISTORY'

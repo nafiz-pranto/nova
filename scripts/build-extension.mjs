@@ -189,10 +189,22 @@ await esbuild.build({
 console.log('[build-extension] Bundled app.js');
 
 // 7. Write Tailwind / base CSS
+let compiledTailwind = '';
+const distAssetsDir = path.join(rootDir, 'dist/assets');
+if (fs.existsSync(distAssetsDir)) {
+  const cssFiles = fs.readdirSync(distAssetsDir).filter(f => f.endsWith('.css'));
+  if (cssFiles.length > 0) {
+    compiledTailwind = fs.readFileSync(path.join(distAssetsDir, cssFiles[0]), 'utf-8');
+    console.log(`[build-extension] Injected compiled Tailwind CSS (${Math.round(compiledTailwind.length / 1024)} KB) from ${cssFiles[0]}`);
+  }
+}
+
 const cssContent = `
-/* Pre-rendered utility styling for Chrome Extension UI */
+${compiledTailwind}
+
+/* Extension-specific UI resets */
 * { box-sizing: border-box; }
-body { margin: 0; padding: 0; background: #0f172a; color: #f8fafc; font-family: ui-sans-serif, system-ui, sans-serif; }
+body { margin: 0; padding: 0; background: #0f172a; color: #f8fafc; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 button, input, select, textarea { font-family: inherit; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #0f172a; }
@@ -202,4 +214,38 @@ button, input, select, textarea { font-family: inherit; }
 fs.writeFileSync(path.join(outDir, 'styles.css'), cssContent);
 console.log('[build-extension] Written styles.css');
 
+// 8. Package distribution ZIPs for GitHub Releases
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const archiver = require('archiver');
+
+function createZipArchive(sourceDir, zipPath) {
+  return new Promise((resolve, reject) => {
+    const parentDir = path.dirname(zipPath);
+    if (!fs.existsSync(parentDir)) {
+      fs.mkdirSync(parentDir, { recursive: true });
+    }
+
+    const output = fs.createWriteStream(zipPath);
+    const archive = new archiver.ZipArchive({ zlib: { level: 9 } });
+
+    output.on('close', () => {
+      console.log(`[build-extension] Packaged release ZIP: ${zipPath} (${(archive.pointer() / 1024).toFixed(1)} KB)`);
+      resolve();
+    });
+
+    archive.on('error', (err) => reject(err));
+    archive.pipe(output);
+    archive.directory(sourceDir, false);
+    archive.finalize();
+  });
+}
+
+const releaseZipPath1 = path.join(rootDir, 'extension.zip');
+const releaseZipPath2 = path.join(rootDir, 'dist/meta-ad-library-lead-scraper-v1.0.0.zip');
+
+await createZipArchive(outDir, releaseZipPath1);
+await createZipArchive(outDir, releaseZipPath2);
+
 console.log('[build-extension] Extension build completed successfully in ./extension');
+console.log('[build-extension] Release distribution packages ready in ./extension.zip and ./dist/meta-ad-library-lead-scraper-v1.0.0.zip');

@@ -3,7 +3,9 @@
  * Operates safely inside Content Scripts and local browser automation contexts.
  */
 
-import { ScrapedAdCandidate, ExtensionLead } from './types.ts';
+import type { ScrapedAdCandidate, ExtensionLead, ExtensionResearchRun } from './types.ts';
+import { LeadRelevanceEngine } from './relevanceEngine.ts';
+import type { ResearchIntent } from './relevanceEngine.ts';
 
 /**
  * Checks whether a given URL is a Meta Ad Library search or listing page.
@@ -22,15 +24,15 @@ export function isMetaAdLibraryUrl(url: string): boolean {
 /**
  * Detects whether Meta's anti-bot challenge, CAPTCHA, or login wall is active.
  */
-export function checkForBotChallenge(doc: Document): { isBlocked: boolean; reason?: string } {
+export function checkForBotChallenge(doc: Document): { isBlocked: boolean; reason?: string; code?: 'CHALLENGED' | 'RATE_LIMITED' } {
   const text = doc.body ? doc.body.innerText : '';
 
   if (text.includes('Security Check') || text.includes('Enter the characters you see below')) {
-    return { isBlocked: true, reason: 'Meta CAPTCHA / Security Check challenge presented.' };
+    return { isBlocked: true, reason: 'Meta Security Check / CAPTCHA challenge presented.', code: 'CHALLENGED' };
   }
 
-  if (text.includes('You’re Temporarily Blocked') || text.includes('You are temporarily blocked')) {
-    return { isBlocked: true, reason: 'Meta IP or rate limit temporarily blocked request.' };
+  if (text.includes('You’re Temporarily Blocked') || text.includes('You are temporarily blocked') || text.includes('Rate limit exceeded') || text.includes('Too Many Requests')) {
+    return { isBlocked: true, reason: 'Meta access temporarily rate-limited.', code: 'RATE_LIMITED' };
   }
 
   if (text.includes('Log In to Facebook') && doc.querySelectorAll('input[type="password"]').length > 0) {
@@ -39,7 +41,7 @@ export function checkForBotChallenge(doc: Document): { isBlocked: boolean; reaso
       el => el.textContent && el.textContent.includes('Library ID:')
     );
     if (!hasAdCards) {
-      return { isBlocked: true, reason: 'Meta mandatory login dialog blocking public ad library access.' };
+      return { isBlocked: true, reason: 'Meta mandatory login dialog restricting public ad library access.', code: 'CHALLENGED' };
     }
   }
 
@@ -310,22 +312,37 @@ export function extractAdCardsFromDocument(doc: Document, observedKeyword?: stri
 
 /**
  * Deduplicates and aggregates candidates into clean, unified lead records.
+ * If intent is provided, candidates are strictly evaluated for relevance:
+ * RELEVANT candidates are accepted, while NOT_RELEVANT and UNCERTAIN candidates are filtered out.
  */
 export function aggregateCandidatesToLeads(
   candidates: ScrapedAdCandidate[],
   locationCode: string,
   locationName: string,
   maxResults: number,
-  existingLeads: ExtensionLead[] = []
-): { leads: ExtensionLead[]; totalAdsCount: number } {
-  const leadMap = new Map<string, ExtensionLead>();
-
-  // Initialize with existing leads
-  for (const lead of existingLeads) {
-    leadMap.set(lead.canonicalName.toLowerCase(), { ...lead });
-  }
-
+  existingLeads: ExtensionLead[] = [],
+  intent?: ResearchIntent
+): {
+  leads: ExtensionLead[];
+  totalAdsCount: number;
+  rejectedCount: number;
+  uncertainCount: number;
+  evaluatedCount: number;
+  counters: {
+    rawAds: number;
+    normalizedCandidates: number;
+    relevantCandidates: number;
+    uncertainCandidates: number;
+    notRelevantCandidates: number;
+    duplicatesRemoved: number;
+    finalUniqueLeads: number;
+    reasonCodes: Record<string, number>;
+  };
+} {
+  // Group all candidates by normalized advertiser name
+  const candidateGroups = new Map<string, ScrapedAdCandidate[]>();
   let totalAdsCount = 0;
+  const reasonCodes: Record<string, number> = {};
 
   for (const cand of candidates) {
     totalAdsCount++;
@@ -333,69 +350,159 @@ export function aggregateCandidatesToLeads(
     if (!cleanName || cleanName === 'Unknown Advertiser') continue;
 
     const key = cleanName.toLowerCase();
+    const group = candidateGroups.get(key) || [];
+    group.push(cand);
+    candidateGroups.set(key, group);
+  }
+
+  const leadMap = new Map<string, ExtensionLead>();
+
+  // Initialize with existing leads
+  for (const lead of existingLeads) {
+    leadMap.set(lead.canonicalName.toLowerCase(), { ...lead });
+  }
+
+  let rejectedCount = 0;
+  let uncertainCount = 0;
+  let evaluatedCount = 0;
+
+  for (const [key, cands] of candidateGroups.entries()) {
+    evaluatedCount++;
+    const primaryCand = cands[0];
+    const cleanName = primaryCand.pageName.trim();
+
+    // 1. Evaluate relevance if research intent is provided
+    const evalResult = intent ? LeadRelevanceEngine.evaluateEntity(cleanName, cands, intent) : null;
+
+    if (intent && evalResult) {
+      const code = evalResult.reasonCode || 'UNKNOWN';
+      reasonCodes[code] = (reasonCodes[code] || 0) + 1;
+
+      if (evalResult.decision === 'NOT_RELEVANT') {
+        rejectedCount++;
+        continue;
+      }
+      if (evalResult.decision === 'UNCERTAIN') {
+        uncertainCount++;
+        // Strict Gate v2 policy: UNCERTAIN candidates are excluded from final accepted leads
+        continue;
+      }
+    }
+
+    // 2. Candidate is RELEVANT (or no intent was provided for raw aggregation)
     const existing = leadMap.get(key);
 
     if (existing) {
-      existing.activeAdCount += 1;
-      if (!existing.adLibraryIds.includes(cand.libraryId)) {
-        existing.adLibraryIds.push(cand.libraryId);
+      existing.activeAdCount += cands.length;
+      for (const cand of cands) {
+        if (!existing.adLibraryIds.includes(cand.libraryId)) {
+          existing.adLibraryIds.push(cand.libraryId);
+        }
+        if (cand.observedKeyword && !existing.matchedKeywords.includes(cand.observedKeyword)) {
+          existing.matchedKeywords.push(cand.observedKeyword);
+        }
+        if (!existing.facebookPageUrl && cand.facebookPageUrl) {
+          existing.facebookPageUrl = cand.facebookPageUrl;
+          existing.facebookPageState = 'found';
+        }
+        if (!existing.destinationUrl && cand.destinationUrl) {
+          existing.destinationUrl = cand.destinationUrl;
+          existing.destinationDomain = cand.destinationDomain;
+          existing.websiteState = 'found';
+        }
+        if (!existing.sampleCopy && cand.bodyCopy) {
+          existing.sampleCopy = cand.bodyCopy;
+        }
+        if (!existing.sampleCta && cand.ctaText) {
+          existing.sampleCta = cand.ctaText;
+        }
       }
-      if (cand.observedKeyword && !existing.matchedKeywords.includes(cand.observedKeyword)) {
-        existing.matchedKeywords.push(cand.observedKeyword);
-      }
-      if (!existing.facebookPageUrl && cand.facebookPageUrl) {
-        existing.facebookPageUrl = cand.facebookPageUrl;
-        existing.facebookPageState = 'found';
-      }
-      if (!existing.destinationUrl && cand.destinationUrl) {
-        existing.destinationUrl = cand.destinationUrl;
-        existing.destinationDomain = cand.destinationDomain;
-        existing.websiteState = 'found';
-      }
-      if (!existing.sampleCopy && cand.bodyCopy) {
-        existing.sampleCopy = cand.bodyCopy;
-      }
-      if (!existing.sampleCta && cand.ctaText) {
-        existing.sampleCta = cand.ctaText;
+
+      if (evalResult) {
+        existing.relevanceScore = Math.max(existing.relevanceScore || 0, evalResult.score);
+        existing.relevanceDecision = evalResult.decision;
+        existing.relevanceConfidence = evalResult.confidence;
+        existing.relevanceReasons = evalResult.reasons;
+        existing.relevanceMatchedTerms = evalResult.matchedTerms;
+        existing.relevanceEvidence = evalResult.evidence;
+        existing.relevanceStrategyVersion = evalResult.strategyVersion;
+        existing.engineVersion = evalResult.engineVersion;
+        existing.presetVersion = evalResult.presetVersion;
       }
     } else {
       if (leadMap.size >= maxResults) {
-        // If we already reached the max leads requested, do not add more unique entities
+        // Quota reached for unique relevant leads
         continue;
       }
 
-      const fbState = cand.facebookPageUrl ? 'found' : 'not_found';
-      const webState = cand.destinationUrl ? 'found' : 'not_found';
+      // Consolidate best fields across candidate cards
+      const bestFbUrl = cands.find(c => Boolean(c.facebookPageUrl))?.facebookPageUrl;
+      const bestDestCand = cands.find(c => Boolean(c.destinationUrl));
+      const bestDestUrl = bestDestCand?.destinationUrl;
+      const bestDestDomain = bestDestCand?.destinationDomain;
+      const bestCopy = cands.find(c => Boolean(c.bodyCopy))?.bodyCopy;
+      const bestCta = cands.find(c => Boolean(c.ctaText))?.ctaText;
+
+      const adIds = Array.from(new Set(cands.map(c => c.libraryId).filter(Boolean)));
+      const matchedKws = Array.from(new Set(cands.map(c => c.observedKeyword).filter(Boolean) as string[]));
+
+      const fbState = bestFbUrl ? 'found' : 'not_found';
+      const webState = bestDestUrl ? 'found' : 'not_found';
 
       const lead: ExtensionLead = {
         id: `lead_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
         name: cleanName,
         canonicalName: cleanName,
         facebookPageName: cleanName,
-        facebookPageUrl: cand.facebookPageUrl,
+        facebookPageUrl: bestFbUrl,
         facebookPageState: fbState,
-        destinationUrl: cand.destinationUrl,
-        destinationDomain: cand.destinationDomain,
+        destinationUrl: bestDestUrl,
+        destinationDomain: bestDestDomain,
         websiteState: webState,
-        activeAdCount: 1,
-        adLibraryIds: [cand.libraryId],
-        adLibraryUrl: cand.libraryId ? `https://www.facebook.com/ads/library/?id=${cand.libraryId}` : undefined,
-        matchedKeywords: cand.observedKeyword ? [cand.observedKeyword] : [],
+        activeAdCount: cands.length,
+        adLibraryIds: adIds,
+        adLibraryUrl: adIds[0] ? `https://www.facebook.com/ads/library/?id=${adIds[0]}` : undefined,
+        matchedKeywords: matchedKws.length > 0 ? matchedKws : (intent?.primaryKeywords?.slice(0, 1) || []),
         locationCode,
         locationName,
         status: webState === 'found' ? 'QUALIFIED' : 'REVIEW_REQUIRED',
         discoveredAt: new Date().toISOString(),
-        sampleCopy: cand.bodyCopy,
-        sampleCta: cand.ctaText
+        sampleCopy: bestCopy,
+        sampleCta: bestCta,
+        relevanceScore: evalResult?.score,
+        relevanceDecision: evalResult?.decision,
+        relevanceConfidence: evalResult?.confidence,
+        relevanceReasons: evalResult?.reasons,
+        relevanceMatchedTerms: evalResult?.matchedTerms,
+        relevanceEvidence: evalResult?.evidence,
+        relevanceStrategyVersion: evalResult?.strategyVersion,
+        engineVersion: evalResult?.engineVersion,
+        presetVersion: evalResult?.presetVersion
       };
 
       leadMap.set(key, lead);
     }
   }
 
+  const finalLeads = Array.from(leadMap.values());
+  const duplicatesRemoved = totalAdsCount - finalLeads.length;
+
   return {
-    leads: Array.from(leadMap.values()),
-    totalAdsCount
+    leads: finalLeads,
+    totalAdsCount,
+    rejectedCount,
+    uncertainCount,
+    evaluatedCount,
+    counters: {
+      rawAds: totalAdsCount,
+      normalizedCandidates: evaluatedCount,
+      relevantCandidates: finalLeads.length,
+      uncertainCandidates: uncertainCount,
+      notRelevantCandidates: rejectedCount,
+      duplicatesRemoved: Math.max(0, duplicatesRemoved),
+      finalUniqueLeads: finalLeads.length,
+      reasonCodes
+    }
   };
 }
 
@@ -420,7 +527,11 @@ export function sanitizeCsvField(val: unknown): string {
 /**
  * Generates RFC-compliant and formula-safe CSV from leads
  */
-export function exportLeadsToCsv(leads: ExtensionLead[]): string {
+export function exportLeadsToCsv(leads: ExtensionLead[], run?: ExtensionResearchRun): string {
+  const metaHeader = run
+    ? `# Research Run: ${run.researchName} | Mode: ${run.mode} | Requested Quota: ${run.targetLeadCount} | Final Relevant Leads: ${run.leads.length} | Status: ${run.status} | Stop Reason: ${run.stopReason || 'N/A'} | Engine Version: ${run.engineVersion || 'strict-v2'}\r\n`
+    : '';
+
   const headers = [
     'Lead Name',
     'Facebook Page Name',
@@ -435,6 +546,12 @@ export function exportLeadsToCsv(leads: ExtensionLead[]): string {
     'Location Name',
     'Ad Library IDs',
     'Meta Ad Library URL',
+    'Relevance Decision',
+    'Relevance Score',
+    'Relevance Confidence',
+    'Relevance Matched Terms',
+    'Relevance Explanation',
+    'Engine Version',
     'Status',
     'Discovered At',
     'Sample Copy',
@@ -455,11 +572,17 @@ export function exportLeadsToCsv(leads: ExtensionLead[]): string {
     sanitizeCsvField(l.locationName),
     sanitizeCsvField(l.adLibraryIds.join('; ')),
     sanitizeCsvField(l.adLibraryUrl || ''),
+    sanitizeCsvField(l.relevanceDecision || 'RELEVANT'),
+    sanitizeCsvField(l.relevanceScore !== undefined ? `${(l.relevanceScore * 100).toFixed(0)}%` : '100%'),
+    sanitizeCsvField(l.relevanceConfidence || 'HIGH'),
+    sanitizeCsvField(l.relevanceMatchedTerms ? l.relevanceMatchedTerms.join('; ') : ''),
+    sanitizeCsvField(l.relevanceReasons ? l.relevanceReasons.slice(0, 2).join(' | ') : ''),
+    sanitizeCsvField(l.engineVersion || 'strict-v2'),
     sanitizeCsvField(l.status),
     sanitizeCsvField(l.discoveredAt),
     sanitizeCsvField(l.sampleCopy || ''),
     sanitizeCsvField(l.sampleCta || '')
   ]);
 
-  return [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+  return metaHeader + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
 }

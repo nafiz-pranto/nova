@@ -14832,6 +14832,20 @@ var __iconNode15 = [
 ];
 var Trash2 = createLucideIcon("trash-2", __iconNode15);
 
+// node_modules/lucide-react/dist/esm/icons/triangle-alert.js
+var __iconNode16 = [
+  [
+    "path",
+    {
+      d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",
+      key: "wmoenq"
+    }
+  ],
+  ["path", { d: "M12 9v4", key: "juzpu7" }],
+  ["path", { d: "M12 17h.01", key: "p32p05" }]
+];
+var TriangleAlert = createLucideIcon("triangle-alert", __iconNode16);
+
 // src/data/presetCatalogue.ts
 var RESEARCH_PRESETS = [
   // ==========================================
@@ -15605,6 +15619,1177 @@ function getLocationByCode(code) {
   return META_AD_LIBRARY_LOCATIONS.find((loc) => loc.locationCode === upper);
 }
 
+// src/extension/relevanceEngine.ts
+var RELEVANCE_STRATEGY_VERSION = 2;
+var RELEVANCE_ENGINE_VERSION = "strict-v2";
+var BOUNDED_TAXONOMY = {
+  furniture: {
+    category: "furniture",
+    rootTerms: ["furniture", "furnishing", "furnishings", "furnish"],
+    productServiceTerms: [
+      "chair",
+      "table",
+      "desk",
+      "sofa",
+      "couch",
+      "bed",
+      "mattress",
+      "cabinet",
+      "wardrobe",
+      "dining",
+      "bench",
+      "drawer",
+      "drawers",
+      "stool",
+      "bookshelf",
+      "shelf",
+      "shelves",
+      "almirah",
+      "cupboard",
+      "recliner",
+      "credenza",
+      "workstation",
+      "seating",
+      "lounge",
+      "headboard",
+      "nightstand",
+      "dresser",
+      "vanity",
+      "sideboard",
+      "armchair",
+      "futon",
+      "loveseat",
+      "ottoman",
+      "sectional",
+      "ergonomic chair",
+      "standing desk",
+      "bedroom set"
+    ],
+    industryDescriptors: [
+      "furniture store",
+      "furniture retailer",
+      "furniture manufacturer",
+      "furniture studio",
+      "home furniture",
+      "office furniture",
+      "wood furniture",
+      "custom furniture",
+      "living room",
+      "bedroom set",
+      "dining room"
+    ],
+    conflictingCategories: ["sports", "healthcare", "politics", "gaming", "casino", "education", "news_media"]
+  },
+  restaurant: {
+    category: "restaurant",
+    rootTerms: ["restaurant", "dining", "eatery", "bistro", "cafe", "food"],
+    productServiceTerms: [
+      "menu",
+      "cuisine",
+      "chef",
+      "catering",
+      "takeaway",
+      "takeout",
+      "delivery",
+      "breakfast",
+      "lunch",
+      "dinner",
+      "brunch",
+      "burger",
+      "pizza",
+      "pasta",
+      "steak",
+      "seafood",
+      "dessert",
+      "cocktails",
+      "wine",
+      "appetizers",
+      "buffet"
+    ],
+    industryDescriptors: [
+      "fine dining",
+      "casual dining",
+      "restaurant & bar",
+      "cafe & bakery",
+      "culinary"
+    ],
+    conflictingCategories: ["sports", "politics", "gaming", "casino"]
+  },
+  dental: {
+    category: "dental",
+    rootTerms: ["dentist", "dental", "orthodontist", "orthodontics"],
+    productServiceTerms: [
+      "teeth",
+      "tooth",
+      "invisalign",
+      "braces",
+      "whitening",
+      "implants",
+      "cleaning",
+      "denture",
+      "crown",
+      "veneer",
+      "extraction",
+      "cavity",
+      "oral surgery"
+    ],
+    industryDescriptors: ["dental clinic", "dental practice", "family dentistry"],
+    conflictingCategories: ["sports", "politics", "gaming", "furniture"]
+  },
+  roofing: {
+    category: "roofing",
+    rootTerms: ["roof", "roofing", "roofer"],
+    productServiceTerms: [
+      "shingles",
+      "gutters",
+      "siding",
+      "leak repair",
+      "metal roof",
+      "tile roof",
+      "flat roof",
+      "roof inspection",
+      "roof replacement",
+      "flashing",
+      "soffit"
+    ],
+    industryDescriptors: ["roofing contractor", "roofing company", "roofing specialists"],
+    conflictingCategories: ["sports", "politics", "gaming"]
+  },
+  real_estate: {
+    category: "real_estate",
+    rootTerms: ["real estate", "realty", "realtor", "property", "properties"],
+    productServiceTerms: [
+      "apartment",
+      "condo",
+      "townhouse",
+      "villa",
+      "homes for sale",
+      "open house",
+      "mortgage",
+      "brokerage",
+      "leasing",
+      "tenant",
+      "landlord",
+      "commercial space"
+    ],
+    industryDescriptors: ["real estate agency", "property group", "real estate broker"],
+    conflictingCategories: ["sports", "politics", "gaming"]
+  },
+  marketing_agency: {
+    category: "marketing_agency",
+    rootTerms: ["marketing agency", "digital marketing", "advertising agency", "media agency"],
+    productServiceTerms: [
+      "seo",
+      "ppc",
+      "lead generation",
+      "social media marketing",
+      "branding",
+      "content marketing",
+      "web design",
+      "growth marketing",
+      "performance marketing"
+    ],
+    industryDescriptors: ["creative agency", "marketing partner", "growth agency"],
+    conflictingCategories: ["sports", "politics", "gaming"]
+  },
+  clothing: {
+    category: "clothing",
+    rootTerms: ["clothing", "apparel", "fashion", "wear", "garments"],
+    productServiceTerms: [
+      "dress",
+      "shirt",
+      "pants",
+      "t-shirt",
+      "jacket",
+      "hoodie",
+      "shoes",
+      "footwear",
+      "denim",
+      "jeans",
+      "boutique",
+      "suits",
+      "outfit",
+      "swimwear"
+    ],
+    industryDescriptors: ["clothing brand", "fashion boutique", "apparel store"],
+    conflictingCategories: ["sports_team", "politics", "gaming"]
+  },
+  fitness: {
+    category: "fitness",
+    rootTerms: ["fitness", "gym", "workout", "training"],
+    productServiceTerms: [
+      "personal trainer",
+      "crossfit",
+      "bodybuilding",
+      "weightlifting",
+      "cardio",
+      "yoga",
+      "pilates",
+      "membership",
+      "strength training",
+      "coaching"
+    ],
+    industryDescriptors: ["fitness center", "health club", "gym & fitness"],
+    conflictingCategories: ["politics", "gaming", "casino"]
+  },
+  saas: {
+    category: "saas",
+    rootTerms: ["saas", "cloud software", "business software", "software platform"],
+    productServiceTerms: [
+      "crm",
+      "erp",
+      "pipeline",
+      "workflow automation",
+      "subscription",
+      "enterprise software",
+      "dashboard",
+      "analytics tool",
+      "b2b platform"
+    ],
+    industryDescriptors: ["b2b saas", "software provider", "cloud solution"],
+    conflictingCategories: ["sports", "politics", "casino"]
+  },
+  construction: {
+    category: "construction",
+    rootTerms: ["construction", "contractor", "builder", "remodeling"],
+    productServiceTerms: [
+      "renovation",
+      "drywall",
+      "masonry",
+      "excavation",
+      "framing",
+      "general contractor",
+      "commercial building",
+      "home addition",
+      "deck building",
+      "demolition"
+    ],
+    industryDescriptors: ["construction company", "building contractors"],
+    conflictingCategories: ["sports", "politics", "gaming"]
+  },
+  photography: {
+    category: "photography",
+    rootTerms: ["photography", "photographer", "photoshoot"],
+    productServiceTerms: [
+      "portrait",
+      "wedding photography",
+      "headshots",
+      "studio portrait",
+      "videography",
+      "photo session",
+      "commercial photography",
+      "event photography"
+    ],
+    industryDescriptors: ["photo studio", "photography services"],
+    conflictingCategories: ["sports_team", "politics", "gaming"]
+  },
+  hvac: {
+    category: "hvac",
+    rootTerms: ["hvac", "air conditioning", "heating", "cooling", "ventilation"],
+    productServiceTerms: [
+      "furnace",
+      "heat pump",
+      "duct",
+      "ductwork",
+      "ac repair",
+      "thermostat",
+      "compressor",
+      "refrigerant",
+      "boiler",
+      "air filter"
+    ],
+    industryDescriptors: ["hvac contractor", "heating repair", "ac installation"],
+    conflictingCategories: ["sports", "politics", "gaming"]
+  }
+};
+var NEGATIVE_CATEGORIES = [
+  {
+    category: "sports",
+    terms: [
+      "manchester united",
+      "premier league",
+      "football club",
+      "soccer team",
+      "cricket board",
+      "champions league",
+      "matchday",
+      "fifa",
+      "uefa",
+      "nba",
+      "nfl",
+      "sports club",
+      "women team",
+      "head coach",
+      "stadium"
+    ],
+    entityTokens: ["fc", "united", "stadium", "club", "league", "team", "cricket", "football", "fifa", "uefa"],
+    penalty: -0.65
+  },
+  {
+    category: "healthcare",
+    terms: [
+      "health support community",
+      "saved my husband",
+      "seventy-nine",
+      "cancer treatment",
+      "diabetes remedy",
+      "chronic illness",
+      "prescription drug",
+      "patient clinical",
+      "health injustice",
+      "clinical trial",
+      "disease cure",
+      "medical hospital",
+      "dental care clinic"
+    ],
+    entityTokens: ["hospital", "clinic", "medical", "pharma", "health", "doctor", "patient"],
+    penalty: -0.65
+  },
+  {
+    category: "politics",
+    terms: [
+      "political campaign",
+      "election rally",
+      "vote for",
+      "parliament member",
+      "political party",
+      "candidate for senate",
+      "citizens for governance",
+      "ballot initiative",
+      "party congress"
+    ],
+    entityTokens: ["party", "senate", "parliament", "campaign", "governance", "election", "voters"],
+    penalty: -0.65
+  },
+  {
+    category: "gaming_casino",
+    terms: [
+      "online casino",
+      "slot machine",
+      "jackpot betting",
+      "poker chips",
+      "crypto casino",
+      "betting odds",
+      "spin to win",
+      "roulette online"
+    ],
+    entityTokens: ["casino", "betting", "poker", "slots", "jackpot"],
+    penalty: -0.65
+  },
+  {
+    category: "news_media",
+    terms: [
+      "breaking news",
+      "daily news",
+      "news network",
+      "news channel",
+      "broadcasting station",
+      "journalism report",
+      "magazine online"
+    ],
+    entityTokens: ["news", "media", "journal", "broadcasting", "times", "chronicle", "gazette"],
+    penalty: -0.55
+  },
+  {
+    category: "education",
+    terms: [
+      "university admissions",
+      "undergraduate degree",
+      "campus tuition",
+      "public school district",
+      "college alumni",
+      "academic curriculum"
+    ],
+    entityTokens: ["university", "college", "school", "academy", "campus", "alumni"],
+    penalty: -0.55
+  },
+  {
+    category: "charity_ngo",
+    terms: [
+      "charity relief",
+      "humanitarian aid",
+      "donation campaign",
+      "non-profit organization",
+      "relief fund",
+      "donate now to support"
+    ],
+    entityTokens: ["charity", "foundation", "relief", "humanitarian", "donation", "ngo"],
+    penalty: -0.55
+  }
+];
+var STOP_WORDS = /* @__PURE__ */ new Set([
+  "a",
+  "about",
+  "above",
+  "after",
+  "again",
+  "against",
+  "all",
+  "am",
+  "an",
+  "and",
+  "any",
+  "are",
+  "aren",
+  "as",
+  "at",
+  "be",
+  "because",
+  "been",
+  "before",
+  "being",
+  "below",
+  "between",
+  "both",
+  "but",
+  "by",
+  "can",
+  "cannot",
+  "could",
+  "did",
+  "do",
+  "does",
+  "doing",
+  "down",
+  "during",
+  "each",
+  "few",
+  "for",
+  "from",
+  "further",
+  "had",
+  "has",
+  "have",
+  "having",
+  "he",
+  "her",
+  "here",
+  "hers",
+  "herself",
+  "him",
+  "himself",
+  "his",
+  "how",
+  "i",
+  "if",
+  "in",
+  "into",
+  "is",
+  "it",
+  "its",
+  "itself",
+  "just",
+  "me",
+  "more",
+  "most",
+  "my",
+  "myself",
+  "no",
+  "nor",
+  "not",
+  "now",
+  "of",
+  "off",
+  "on",
+  "once",
+  "only",
+  "or",
+  "other",
+  "ought",
+  "our",
+  "ours",
+  "ourselves",
+  "out",
+  "over",
+  "own",
+  "same",
+  "she",
+  "should",
+  "so",
+  "some",
+  "such",
+  "than",
+  "that",
+  "the",
+  "their",
+  "theirs",
+  "them",
+  "themselves",
+  "then",
+  "there",
+  "these",
+  "they",
+  "this",
+  "those",
+  "through",
+  "to",
+  "too",
+  "under",
+  "until",
+  "up",
+  "very",
+  "was",
+  "we",
+  "were",
+  "what",
+  "when",
+  "where",
+  "which",
+  "while",
+  "who",
+  "whom",
+  "why",
+  "with",
+  "would",
+  "you",
+  "your",
+  "yours",
+  "yourself",
+  "yourselves"
+]);
+function stemToken(token) {
+  const t = token.toLowerCase().trim();
+  if (t.length <= 3) return t;
+  if (t.endsWith("ies") && t.length > 4) {
+    return t.substring(0, t.length - 3) + "y";
+  }
+  if (t.endsWith("ses") || t.endsWith("xes") || t.endsWith("zes") || t.endsWith("ches") || t.endsWith("shes")) {
+    return t.substring(0, t.length - 2);
+  }
+  if (t.endsWith("s") && !t.endsWith("ss") && !t.endsWith("us") && !t.endsWith("is")) {
+    return t.substring(0, t.length - 1);
+  }
+  return t;
+}
+function tokenizeText(text) {
+  if (!text) return [];
+  return text.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, " ").split(/[\s-]+/).map((w) => w.trim()).filter((w) => w.length >= 2 && !STOP_WORDS.has(w)).map(stemToken);
+}
+function extractUrlTokens(urlStr) {
+  if (!urlStr) return [];
+  try {
+    const url = new URL(urlStr.startsWith("http") ? urlStr : `https://${urlStr}`);
+    const pathAndQuery = `${url.pathname} ${url.search}`.replace(/[/?&=_.-]/g, " ");
+    return tokenizeText(pathAndQuery);
+  } catch {
+    return tokenizeText(urlStr.replace(/[/?&=_.-]/g, " "));
+  }
+}
+function normalizeEvidence(evidence) {
+  const rawAdvertiser = (evidence.advertiserName || "").trim();
+  const rawAdCopy = (evidence.adText || "").trim();
+  const rawPageName = (evidence.facebookPageName || "").trim();
+  const rawCta = (evidence.ctaText || "").trim();
+  let rawDomain = (evidence.destinationDomain || "").toLowerCase().trim();
+  if (!rawDomain && evidence.destinationUrl) {
+    try {
+      const u = new URL(evidence.destinationUrl.startsWith("http") ? evidence.destinationUrl : `https://${evidence.destinationUrl}`);
+      rawDomain = u.hostname.replace(/^(www\.|m\.|l\.)/, "");
+    } catch {
+      rawDomain = "";
+    }
+  }
+  return {
+    normalizedAdvertiserTokens: tokenizeText(rawAdvertiser),
+    normalizedAdTextTokens: tokenizeText(rawAdCopy),
+    normalizedDomain: rawDomain,
+    normalizedUrlSlug: evidence.destinationUrl ? extractUrlTokens(evidence.destinationUrl).join(" ") : "",
+    normalizedPageNameTokens: tokenizeText(rawPageName),
+    normalizedCta: rawCta.toLowerCase(),
+    advertiserText: rawAdvertiser.toLowerCase(),
+    adCopyText: rawAdCopy.toLowerCase()
+  };
+}
+function compileResearchIntent(mode, keywords, presetId, locationCode = "US") {
+  const cleanKeywords = keywords.map((k) => k.trim()).filter(Boolean);
+  if (mode === "PRESET" && presetId) {
+    const preset = RESEARCH_PRESETS.find((p) => p.preset_id === presetId);
+    if (preset) {
+      return {
+        mode: "PRESET",
+        keywords: preset.primary_keywords,
+        presetId: preset.preset_id,
+        presetName: preset.name,
+        presetVersion: preset.version,
+        targetIndustry: preset.industry,
+        targetSubIndustry: preset.sub_industry,
+        primaryKeywords: preset.primary_keywords,
+        secondaryKeywords: preset.secondary_keywords,
+        exclusions: preset.optional_exclusions || [],
+        locationCode
+      };
+    }
+  }
+  return {
+    mode: "CUSTOM",
+    keywords: cleanKeywords,
+    primaryKeywords: cleanKeywords,
+    secondaryKeywords: [],
+    exclusions: [],
+    locationCode
+  };
+}
+var LeadRelevanceEngine = class _LeadRelevanceEngine {
+  static {
+    this.VERSION = RELEVANCE_STRATEGY_VERSION;
+  }
+  static {
+    this.ENGINE_VERSION = RELEVANCE_ENGINE_VERSION;
+  }
+  static {
+    this.compileResearchIntent = compileResearchIntent;
+  }
+  /**
+   * Evaluates a single candidate ad against the research intent using the Multi-Stage Pipeline.
+   */
+  static evaluateCandidate(candidate, intent) {
+    const evidence = {
+      advertiserName: candidate.pageName,
+      adText: candidate.bodyCopy,
+      destinationUrl: candidate.destinationUrl,
+      destinationDomain: candidate.destinationDomain,
+      facebookPageName: candidate.pageName,
+      facebookPageUrl: candidate.facebookPageUrl,
+      ctaText: candidate.ctaText,
+      matchedKeyword: candidate.observedKeyword
+    };
+    return this.evaluateEvidence(evidence, intent);
+  }
+  /**
+   * Evaluates structured candidate evidence against research intent.
+   * Deterministic, explainable, and bounded.
+   */
+  static evaluateEvidence(evidence, intent) {
+    const normalized = normalizeEvidence(evidence);
+    const structuredEvidence = [];
+    const conflicts = [];
+    const reasons = [];
+    const matchedKeywords = [];
+    const matchedTerms = [];
+    const negativeSignals = [];
+    const allQueryPhrases = [
+      ...intent.primaryKeywords || intent.keywords || [],
+      ...intent.secondaryKeywords || []
+    ].map((k) => k.toLowerCase().trim()).filter(Boolean);
+    const activeTaxonomies = [];
+    for (const [key, tax] of Object.entries(BOUNDED_TAXONOMY)) {
+      if (allQueryPhrases.some(
+        (phrase) => phrase.includes(key) || tax.rootTerms.some((rt) => phrase.includes(rt))
+      )) {
+        activeTaxonomies.push(tax);
+      }
+    }
+    if (activeTaxonomies.length === 0 && allQueryPhrases.length > 0) {
+      const dynamicRoots = [];
+      const dynamicStems = [];
+      for (const phrase of allQueryPhrases) {
+        dynamicRoots.push(phrase);
+        for (const tok of tokenizeText(phrase)) {
+          dynamicStems.push(tok);
+        }
+      }
+      activeTaxonomies.push({
+        category: allQueryPhrases[0],
+        rootTerms: Array.from(new Set(dynamicRoots)),
+        productServiceTerms: Array.from(new Set(dynamicStems)),
+        industryDescriptors: allQueryPhrases,
+        conflictingCategories: ["sports", "healthcare", "politics", "gaming", "casino"]
+      });
+    }
+    const coreQueryTokens = /* @__PURE__ */ new Set();
+    for (const phrase of allQueryPhrases) {
+      for (const t of tokenizeText(phrase)) {
+        coreQueryTokens.add(t);
+      }
+    }
+    for (const tax of activeTaxonomies) {
+      for (const rt of tax.rootTerms) {
+        for (const t of tokenizeText(rt)) {
+          coreQueryTokens.add(t);
+        }
+      }
+    }
+    const productTerms = /* @__PURE__ */ new Set();
+    for (const tax of activeTaxonomies) {
+      for (const t of tax.productServiceTerms) {
+        productTerms.add(stemToken(t));
+      }
+    }
+    let negativePenalty = 0;
+    if (intent.exclusions && intent.exclusions.length > 0) {
+      for (const excl of intent.exclusions) {
+        const exclLower = excl.toLowerCase();
+        if (normalized.advertiserText.includes(exclLower) || normalized.adCopyText.includes(exclLower) || normalized.normalizedDomain.includes(exclLower)) {
+          const reason = `Matched preset exclusion rule: "${excl}"`;
+          negativeSignals.push(reason);
+          conflicts.push({
+            type: "CONTRADICTION",
+            strength: "STRONG",
+            source: "advertiser_name",
+            reason,
+            matchedSignal: excl,
+            reasonCode: "REJECT_PRESET_EXCLUSION"
+          });
+          negativePenalty -= 0.55;
+          break;
+        }
+      }
+    }
+    for (const negCat of NEGATIVE_CATEGORIES) {
+      const isQueryRelatedToNegCat = allQueryPhrases.some(
+        (q) => negCat.terms.some((t) => q.includes(t)) || q.includes(negCat.category) || negCat.category === "sports" && (q.includes("football") || q.includes("cricket") || q.includes("sports"))
+      );
+      if (isQueryRelatedToNegCat) continue;
+      let entityContradictionTerm;
+      for (const term of negCat.terms) {
+        if (normalized.advertiserText.includes(term) || normalized.normalizedDomain.includes(term.replace(/\s+/g, ""))) {
+          entityContradictionTerm = term;
+          break;
+        }
+      }
+      if (entityContradictionTerm) {
+        const reason = `Advertiser entity identity belongs to unrelated category (${negCat.category}): "${entityContradictionTerm}"`;
+        negativeSignals.push(reason);
+        conflicts.push({
+          type: "CONTRADICTION",
+          strength: "STRONG",
+          source: "advertiser_name",
+          reason,
+          matchedSignal: entityContradictionTerm,
+          reasonCode: "REJECT_CONTRADICTION_IDENTITY"
+        });
+        negativePenalty += negCat.penalty;
+        continue;
+      }
+      for (const term of negCat.terms) {
+        if (normalized.adCopyText.includes(term) || normalized.normalizedDomain.includes(term.replace(/\s+/g, ""))) {
+          const reason = `Unrelated ${negCat.category} signal detected in candidate ad context: "${term}"`;
+          negativeSignals.push(reason);
+          conflicts.push({
+            type: "NEGATIVE_CATEGORY",
+            strength: "STRONG",
+            source: "ad_text",
+            reason,
+            matchedSignal: term,
+            reasonCode: "REJECT_CONFLICT"
+          });
+          negativePenalty += negCat.penalty;
+          break;
+        }
+      }
+    }
+    negativePenalty = Math.max(-0.8, negativePenalty);
+    let advertiserNameScore = 0;
+    let hasStrongEntityMatch = false;
+    let hasModerateEntityMatch = false;
+    for (const phrase of allQueryPhrases) {
+      if (normalized.advertiserText.includes(phrase)) {
+        advertiserNameScore = 0.4;
+        hasStrongEntityMatch = true;
+        matchedKeywords.push(phrase);
+        matchedTerms.push(phrase);
+        const reason = `Advertiser name explicitly contains target category query "${phrase}"`;
+        reasons.push(reason);
+        structuredEvidence.push({
+          type: "ENTITY_IDENTITY",
+          strength: "STRONG",
+          source: "advertiser_name",
+          reason,
+          matchedSignal: phrase,
+          reasonCode: "SIGNAL_ENTITY_NAME_EXACT"
+        });
+        break;
+      }
+    }
+    if (!hasStrongEntityMatch) {
+      const matchedTokensInName = normalized.normalizedAdvertiserTokens.filter((t) => coreQueryTokens.has(t));
+      if (matchedTokensInName.length > 0) {
+        advertiserNameScore = 0.3;
+        hasStrongEntityMatch = true;
+        matchedTerms.push(...matchedTokensInName);
+        const reason = `Advertiser name contains core target keyword stem(s): ${matchedTokensInName.join(", ")}`;
+        reasons.push(reason);
+        structuredEvidence.push({
+          type: "ENTITY_IDENTITY",
+          strength: "STRONG",
+          source: "advertiser_name",
+          reason,
+          matchedSignal: matchedTokensInName.join(", "),
+          reasonCode: "SIGNAL_ENTITY_NAME_CORE"
+        });
+      } else {
+        const productTokensInName = normalized.normalizedAdvertiserTokens.filter((t) => productTerms.has(t));
+        const matchedSubstringProduct = Array.from(productTerms).filter(
+          (pt) => pt.length >= 4 && normalized.advertiserText.includes(pt)
+        );
+        const combinedProductMatches = Array.from(/* @__PURE__ */ new Set([...productTokensInName, ...matchedSubstringProduct]));
+        if (combinedProductMatches.length > 0) {
+          advertiserNameScore = 0.25;
+          hasModerateEntityMatch = true;
+          matchedTerms.push(...combinedProductMatches);
+          const reason = `Advertiser name contains target product term(s): ${combinedProductMatches.join(", ")}`;
+          reasons.push(reason);
+          structuredEvidence.push({
+            type: "ENTITY_IDENTITY",
+            strength: "MODERATE",
+            source: "advertiser_name",
+            reason,
+            matchedSignal: combinedProductMatches.join(", "),
+            reasonCode: "SIGNAL_ENTITY_NAME_PRODUCT"
+          });
+        }
+      }
+    }
+    let destinationScore = 0;
+    let hasDomainCategoryMatch = false;
+    if (normalized.normalizedDomain) {
+      const domainHasQuery = allQueryPhrases.some(
+        (p) => normalized.normalizedDomain.includes(p.replace(/\s+/g, ""))
+      );
+      const domainHasProduct = Array.from(productTerms).some(
+        (t) => t.length >= 4 && normalized.normalizedDomain.includes(t)
+      );
+      if (domainHasQuery) {
+        destinationScore = 0.2;
+        hasDomainCategoryMatch = true;
+        const reason = `Destination domain "${normalized.normalizedDomain}" explicitly contains target query`;
+        reasons.push(reason);
+        structuredEvidence.push({
+          type: "ENTITY_IDENTITY",
+          strength: "STRONG",
+          source: "destination_domain",
+          reason,
+          matchedSignal: normalized.normalizedDomain,
+          reasonCode: "SIGNAL_DOMAIN_QUERY_EXACT"
+        });
+      } else if (domainHasProduct) {
+        destinationScore = 0.15;
+        hasDomainCategoryMatch = true;
+        const reason = `Destination domain "${normalized.normalizedDomain}" contains category product term`;
+        reasons.push(reason);
+        structuredEvidence.push({
+          type: "ENTITY_IDENTITY",
+          strength: "MODERATE",
+          source: "destination_domain",
+          reason,
+          matchedSignal: normalized.normalizedDomain,
+          reasonCode: "SIGNAL_DOMAIN_PRODUCT"
+        });
+      }
+    }
+    let facebookPageScore = 0;
+    if (evidence.facebookPageUrl) {
+      const pageUrlLower = evidence.facebookPageUrl.toLowerCase();
+      const pageHasQuery = allQueryPhrases.some((p) => pageUrlLower.includes(p.replace(/\s+/g, "")));
+      if (pageHasQuery) {
+        facebookPageScore = hasStrongEntityMatch ? 0.05 : 0.12;
+        const reason = `Facebook Page handle/URL reinforces target category identity`;
+        reasons.push(reason);
+        structuredEvidence.push({
+          type: "ENTITY_IDENTITY",
+          strength: "MODERATE",
+          source: "facebook_page",
+          reason,
+          matchedSignal: evidence.facebookPageUrl,
+          reasonCode: "SIGNAL_PAGE_HANDLE"
+        });
+      }
+    }
+    let adCopyScore = 0;
+    let adCopyHasPhraseMatch = false;
+    for (const phrase of allQueryPhrases) {
+      if (normalized.adCopyText.includes(phrase)) {
+        adCopyScore += 0.2;
+        adCopyHasPhraseMatch = true;
+        if (!matchedKeywords.includes(phrase)) matchedKeywords.push(phrase);
+        if (!matchedTerms.includes(phrase)) matchedTerms.push(phrase);
+        const reason = `Ad copy directly mentions target query "${phrase}"`;
+        reasons.push(reason);
+        structuredEvidence.push({
+          type: "CATEGORY_MATCH",
+          strength: "MODERATE",
+          source: "ad_text",
+          reason,
+          matchedSignal: phrase,
+          reasonCode: "SIGNAL_COPY_PHRASE"
+        });
+        break;
+      }
+    }
+    const foundProductTermsInCopy = Array.from(productTerms).filter(
+      (t) => normalized.normalizedAdTextTokens.includes(t) || t.length >= 4 && normalized.adCopyText.includes(t)
+    );
+    let hasProductCatalogEvidence = false;
+    if (foundProductTermsInCopy.length > 0) {
+      const sampleTerms = foundProductTermsInCopy.slice(0, 5);
+      matchedTerms.push(...sampleTerms);
+      if (foundProductTermsInCopy.length >= 2) {
+        hasProductCatalogEvidence = true;
+        const copyAdd = Math.min(0.35, 0.15 + (foundProductTermsInCopy.length - 1) * 0.06);
+        adCopyScore += copyAdd;
+        const reason = `Ad copy contains specific category product catalog: ${sampleTerms.join(", ")}`;
+        reasons.push(reason);
+        structuredEvidence.push({
+          type: "CATEGORY_MATCH",
+          strength: "STRONG",
+          source: "ad_text",
+          reason,
+          matchedSignal: sampleTerms.join(", "),
+          reasonCode: "SIGNAL_COPY_PRODUCT_CATALOG"
+        });
+      } else {
+        adCopyScore += 0.12;
+        const reason = `Ad copy mentions category product term: ${sampleTerms[0]}`;
+        reasons.push(reason);
+        structuredEvidence.push({
+          type: "CATEGORY_MATCH",
+          strength: "WEAK",
+          source: "ad_text",
+          reason,
+          matchedSignal: sampleTerms[0],
+          reasonCode: "SIGNAL_COPY_SINGLE_PRODUCT"
+        });
+      }
+    } else if (!adCopyHasPhraseMatch) {
+      const matchedTokensInCopy = normalized.normalizedAdTextTokens.filter((t) => coreQueryTokens.has(t));
+      if (matchedTokensInCopy.length > 0) {
+        adCopyScore += 0.1;
+        matchedTerms.push(...matchedTokensInCopy);
+        const reason = `Ad copy mentions keyword stem(s): ${matchedTokensInCopy.join(", ")}`;
+        reasons.push(reason);
+        structuredEvidence.push({
+          type: "CATEGORY_MATCH",
+          strength: "WEAK",
+          source: "ad_text",
+          reason,
+          matchedSignal: matchedTokensInCopy.join(", "),
+          reasonCode: "SIGNAL_COPY_STEM_ONLY"
+        });
+      }
+    }
+    adCopyScore = Math.min(0.4, adCopyScore);
+    let hasUrlSlugProduct = false;
+    if (normalized.normalizedUrlSlug) {
+      const slugHasProduct = Array.from(productTerms).some(
+        (t) => t.length >= 4 && normalized.normalizedUrlSlug.includes(t)
+      );
+      const slugHasQuery = Array.from(coreQueryTokens).some(
+        (t) => normalized.normalizedUrlSlug.includes(t)
+      );
+      if (slugHasProduct || slugHasQuery) {
+        hasUrlSlugProduct = true;
+        destinationScore = Math.max(destinationScore, 0.12);
+        const reason = `Destination URL path contains target product category context`;
+        reasons.push(reason);
+        structuredEvidence.push({
+          type: "CATEGORY_MATCH",
+          strength: "MODERATE",
+          source: "destination_url",
+          reason,
+          matchedSignal: normalized.normalizedUrlSlug.substring(0, 50),
+          reasonCode: "SIGNAL_URL_SLUG_MATCH"
+        });
+      }
+    }
+    let commercialScore = 0;
+    const commercialCtas = ["shop now", "buy now", "order now", "get quote", "contact us", "order"];
+    const hasCommercialCta = commercialCtas.includes(normalized.normalizedCta);
+    if (hasCommercialCta) {
+      commercialScore += 0.05;
+      structuredEvidence.push({
+        type: "COMMERCIAL_INTENT",
+        strength: "MODERATE",
+        source: "cta_text",
+        reason: `Commercial action call-to-action ("${evidence.ctaText}")`,
+        matchedSignal: evidence.ctaText,
+        reasonCode: "SIGNAL_COMMERCIAL_INTENT_CTA"
+      });
+    }
+    const hasPricingInCopy = /(price|discount|sale|off|taka|bdt|usd|\$|€|£|warranty|deal|buy|shop)/i.test(normalized.adCopyText);
+    if (hasPricingInCopy) {
+      commercialScore = Math.min(0.1, commercialScore + 0.05);
+      structuredEvidence.push({
+        type: "COMMERCIAL_INTENT",
+        strength: "MODERATE",
+        source: "ad_text",
+        reason: `Commercial pricing, transaction, or sale language observed in ad copy`,
+        reasonCode: "SIGNAL_COMMERCIAL_INTENT_PRICE"
+      });
+    }
+    const rawPositiveScore = advertiserNameScore + adCopyScore + destinationScore + facebookPageScore + commercialScore;
+    const totalScore = Math.max(0, Math.min(1, rawPositiveScore + negativePenalty));
+    let decision = "UNCERTAIN";
+    let confidence = "LOW";
+    let reasonCode = "UNCERTAIN_AMBIGUOUS_ENTITY";
+    const hasStrongConflict = conflicts.some((c) => c.type === "CONTRADICTION" && c.strength === "STRONG") || negativePenalty <= -0.3;
+    if (hasStrongConflict) {
+      decision = "NOT_RELEVANT";
+      confidence = "HIGH";
+      reasonCode = conflicts[0]?.reasonCode || "REJECT_CONFLICT";
+      reasons.unshift(`Disqualified by Hard Contradiction Gate: ${negativeSignals.join("; ")}`);
+    } else {
+      const hasOnlyWeakKeywordInCopy = !hasStrongEntityMatch && !hasModerateEntityMatch && !hasDomainCategoryMatch && !hasProductCatalogEvidence;
+      if (hasOnlyWeakKeywordInCopy) {
+        if (totalScore < 0.18) {
+          decision = "NOT_RELEVANT";
+          confidence = "HIGH";
+          reasonCode = "REJECT_INSUFFICIENT_EVIDENCE";
+          reasons.push(`Classified as NOT_RELEVANT: No entity or category evidence found.`);
+        } else {
+          decision = "UNCERTAIN";
+          confidence = "LOW";
+          reasonCode = "UNCERTAIN_KEYWORD_ONLY";
+          reasons.push(`Classified as UNCERTAIN: Mentioned keyword but lacks independent entity or product evidence.`);
+        }
+      } else {
+        const hasSupportingSignal = adCopyScore >= 0.1 || destinationScore >= 0.12 || commercialScore >= 0.05 || facebookPageScore >= 0.05 || hasProductCatalogEvidence;
+        const passesCriterion1 = hasStrongEntityMatch && hasSupportingSignal;
+        const passesCriterion2 = hasModerateEntityMatch && (adCopyScore >= 0.15 || destinationScore >= 0.12 || hasProductCatalogEvidence);
+        const passesCriterion3 = hasProductCatalogEvidence && (destinationScore >= 0.12 || hasUrlSlugProduct || hasDomainCategoryMatch || adCopyScore >= 0.25 && commercialScore >= 0.05);
+        if ((passesCriterion1 || passesCriterion2 || passesCriterion3) && totalScore >= 0.35) {
+          decision = "RELEVANT";
+          const hasMultiDimensionalCorroboration = hasStrongEntityMatch && hasSupportingSignal || hasProductCatalogEvidence && destinationScore >= 0.12 && commercialScore >= 0.05;
+          confidence = totalScore >= 0.6 || hasMultiDimensionalCorroboration ? "HIGH" : "MEDIUM";
+          reasonCode = passesCriterion1 ? "ACCEPT_STRONG_ENTITY_MATCH" : "ACCEPT_MULTI_SIGNAL_MATCH";
+          reasons.push(
+            `Qualified as RELEVANT: ${passesCriterion1 ? "Strong entity identity confirmed with supporting product/commercial evidence" : passesCriterion3 ? "Category product catalog verified with commercial corroboration" : "Entity and category evidence meet sufficiency standards"} (Confidence: ${confidence})`
+          );
+        } else if (totalScore < 0.22) {
+          decision = "NOT_RELEVANT";
+          confidence = totalScore < 0.12 ? "HIGH" : "MEDIUM";
+          reasonCode = "REJECT_CATEGORY_MISMATCH";
+          reasons.push(`Classified as NOT_RELEVANT: Insufficient category evidence (Score: ${(totalScore * 100).toFixed(0)}%)`);
+        } else {
+          decision = "UNCERTAIN";
+          confidence = "LOW";
+          reasonCode = "UNCERTAIN_AMBIGUOUS_ENTITY";
+          reasons.push(`Classified as UNCERTAIN: Evidence is ambiguous or insufficient to confirm business vertical.`);
+        }
+      }
+    }
+    if (evidence.matchedKeyword && !matchedKeywords.includes(evidence.matchedKeyword)) {
+      if (decision === "RELEVANT") {
+        matchedKeywords.push(evidence.matchedKeyword);
+      }
+    }
+    return {
+      decision,
+      confidence,
+      score: Math.round(totalScore * 100) / 100,
+      reasons,
+      matchedKeywords,
+      matchedTerms: Array.from(new Set(matchedTerms)),
+      negativeSignals,
+      evidence: structuredEvidence,
+      conflicts,
+      evidenceBreakdown: {
+        advertiserNameScore,
+        adCopyScore,
+        destinationScore,
+        facebookPageScore,
+        commercialScore,
+        negativePenalty
+      },
+      strategyVersion: RELEVANCE_STRATEGY_VERSION,
+      engineVersion: RELEVANCE_ENGINE_VERSION,
+      presetVersion: intent.presetVersion,
+      reasonCode
+    };
+  }
+  /**
+   * Entity-Level Evaluation: Evaluates multiple ad cards for an advertiser entity
+   * to produce the consolidated entity relevance decision without duplicate inflation.
+   */
+  static evaluateEntity(advertiserName, candidates, intent) {
+    if (candidates.length === 0) {
+      return this.evaluateEvidence({ advertiserName }, intent);
+    }
+    const evaluations = candidates.map((c) => this.evaluateCandidate(c, intent));
+    const allConflicts = evaluations.flatMap((e) => e.conflicts);
+    const hasEntityContradiction = allConflicts.some(
+      (c) => c.type === "CONTRADICTION" && c.strength === "STRONG"
+    );
+    const allNegativeSignals = Array.from(new Set(evaluations.flatMap((e) => e.negativeSignals)));
+    const maxNegativePenalty = Math.min(...evaluations.map((e) => e.evidenceBreakdown.negativePenalty));
+    if (hasEntityContradiction || maxNegativePenalty <= -0.3) {
+      const worstEval = evaluations.find((e) => e.evidenceBreakdown.negativePenalty <= -0.3) || evaluations[0];
+      return {
+        ...worstEval,
+        decision: "NOT_RELEVANT",
+        confidence: "HIGH",
+        negativeSignals: allNegativeSignals,
+        conflicts: allConflicts,
+        reasons: [
+          `Entity disqualified across ${candidates.length} ad(s) due to hard contradiction: ${allNegativeSignals.join("; ")}`
+        ],
+        reasonCode: "REJECT_CONTRADICTION_IDENTITY",
+        engineVersion: RELEVANCE_ENGINE_VERSION,
+        strategyVersion: RELEVANCE_STRATEGY_VERSION
+      };
+    }
+    const seenCopyHashes = /* @__PURE__ */ new Set();
+    const distinctAds = [];
+    for (const c of candidates) {
+      const copyNormalized = (c.bodyCopy || "").toLowerCase().trim().replace(/\s+/g, " ").substring(0, 100);
+      if (!seenCopyHashes.has(copyNormalized)) {
+        seenCopyHashes.add(copyNormalized);
+        distinctAds.push(c);
+      }
+    }
+    evaluations.sort((a, b) => b.score - a.score);
+    const bestEval = evaluations[0];
+    const combinedKeywords = Array.from(new Set(evaluations.flatMap((e) => e.matchedKeywords)));
+    const combinedTerms = Array.from(new Set(evaluations.flatMap((e) => e.matchedTerms)));
+    const allEvidence = Array.from(
+      new Map(evaluations.flatMap((e) => e.evidence).map((ev) => [`${ev.type}:${ev.source}:${ev.reasonCode}`, ev])).values()
+    );
+    let consolidatedScore = bestEval.score;
+    let decision = bestEval.decision;
+    let confidence = bestEval.confidence;
+    let reasonCode = bestEval.reasonCode;
+    const distinctSupportingAds = distinctAds.filter((ad) => {
+      const ev = _LeadRelevanceEngine.evaluateCandidate(ad, intent);
+      return ev.decision === "RELEVANT" || ev.evidence.some((e) => e.type === "CATEGORY_MATCH");
+    });
+    if (allNegativeSignals.length === 0 && distinctSupportingAds.length > 1) {
+      const multiCardBoost = Math.min(0.12, (distinctSupportingAds.length - 1) * 0.04);
+      consolidatedScore = Math.min(1, consolidatedScore + multiCardBoost);
+      if (decision === "UNCERTAIN" && consolidatedScore >= 0.4 && (bestEval.evidenceBreakdown.advertiserNameScore > 0 || bestEval.evidenceBreakdown.adCopyScore >= 0.25)) {
+        decision = "RELEVANT";
+        reasonCode = "ACCEPT_MULTI_SIGNAL_MATCH";
+      }
+      if (consolidatedScore >= 0.6) {
+        confidence = "HIGH";
+      }
+      allEvidence.push({
+        type: "ENTITY_IDENTITY",
+        strength: "STRONG",
+        source: "entity_aggregation",
+        reason: `Entity confirmed across ${distinctSupportingAds.length} distinct category ads`,
+        matchedSignal: `${distinctSupportingAds.length} distinct ads`,
+        reasonCode: "SIGNAL_MULTI_AD_CORROBORATION"
+      });
+    }
+    return {
+      ...bestEval,
+      decision,
+      confidence,
+      score: Math.round(consolidatedScore * 100) / 100,
+      matchedKeywords: combinedKeywords.length > 0 ? combinedKeywords : bestEval.matchedKeywords,
+      matchedTerms: combinedTerms,
+      evidence: allEvidence,
+      conflicts: allConflicts,
+      reasons: [
+        `Entity evaluated across ${candidates.length} ad card(s) (${distinctAds.length} distinct): status ${decision} (${(consolidatedScore * 100).toFixed(0)}%)`,
+        ...bestEval.reasons
+      ],
+      reasonCode,
+      strategyVersion: RELEVANCE_STRATEGY_VERSION,
+      engineVersion: RELEVANCE_ENGINE_VERSION
+    };
+  }
+};
+
 // src/extension/metaAdapter.ts
 function sanitizeCsvField(val) {
   if (val === null || val === void 0) return "";
@@ -15615,7 +16800,9 @@ function sanitizeCsvField(val) {
   str = str.replace(/"/g, '""');
   return `"${str}"`;
 }
-function exportLeadsToCsv(leads) {
+function exportLeadsToCsv(leads, run) {
+  const metaHeader = run ? `# Research Run: ${run.researchName} | Mode: ${run.mode} | Requested Quota: ${run.targetLeadCount} | Final Relevant Leads: ${run.leads.length} | Status: ${run.status} | Stop Reason: ${run.stopReason || "N/A"} | Engine Version: ${run.engineVersion || "strict-v2"}\r
+` : "";
   const headers = [
     "Lead Name",
     "Facebook Page Name",
@@ -15630,6 +16817,12 @@ function exportLeadsToCsv(leads) {
     "Location Name",
     "Ad Library IDs",
     "Meta Ad Library URL",
+    "Relevance Decision",
+    "Relevance Score",
+    "Relevance Confidence",
+    "Relevance Matched Terms",
+    "Relevance Explanation",
+    "Engine Version",
     "Status",
     "Discovered At",
     "Sample Copy",
@@ -15649,12 +16842,18 @@ function exportLeadsToCsv(leads) {
     sanitizeCsvField(l.locationName),
     sanitizeCsvField(l.adLibraryIds.join("; ")),
     sanitizeCsvField(l.adLibraryUrl || ""),
+    sanitizeCsvField(l.relevanceDecision || "RELEVANT"),
+    sanitizeCsvField(l.relevanceScore !== void 0 ? `${(l.relevanceScore * 100).toFixed(0)}%` : "100%"),
+    sanitizeCsvField(l.relevanceConfidence || "HIGH"),
+    sanitizeCsvField(l.relevanceMatchedTerms ? l.relevanceMatchedTerms.join("; ") : ""),
+    sanitizeCsvField(l.relevanceReasons ? l.relevanceReasons.slice(0, 2).join(" | ") : ""),
+    sanitizeCsvField(l.engineVersion || "strict-v2"),
     sanitizeCsvField(l.status),
     sanitizeCsvField(l.discoveredAt),
     sanitizeCsvField(l.sampleCopy || ""),
     sanitizeCsvField(l.sampleCta || "")
   ]);
-  return [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+  return metaHeader + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
 }
 
 // src/extension/ui/App.tsx
@@ -15697,9 +16896,13 @@ var ExtensionApp = () => {
   }, []);
   const loadStateFromStorage = () => {
     if (typeof chrome !== "undefined" && chrome.storage?.local) {
-      chrome.storage.local.get(["activeResearchRun"], (res) => {
-        if (res.activeResearchRun) {
-          setActiveRun(res.activeResearchRun);
+      chrome.storage.local.get(["activeResearchRun", "meta_scraper_active_run"], (res) => {
+        const run = res.activeResearchRun || res.meta_scraper_active_run;
+        if (run) {
+          setActiveRun(run);
+          if (run.leads && run.leads.length > 0) {
+            setActiveTab("RESULTS");
+          }
         }
       });
       loadHistory();
@@ -15707,9 +16910,10 @@ var ExtensionApp = () => {
   };
   const loadHistory = () => {
     if (typeof chrome !== "undefined" && chrome.storage?.local) {
-      chrome.storage.local.get(["researchHistory"], (res) => {
-        if (Array.isArray(res.researchHistory)) {
-          setHistoryRuns(res.researchHistory);
+      chrome.storage.local.get(["researchHistory", "meta_scraper_history"], (res) => {
+        const hist = res.researchHistory || res.meta_scraper_history;
+        if (Array.isArray(hist)) {
+          setHistoryRuns(hist);
         }
       });
     }
@@ -15795,10 +16999,10 @@ var ExtensionApp = () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-  const handleExportCsv = (leads) => {
+  const handleExportCsv = (leads, run) => {
     if (!leads || leads.length === 0) return;
-    const csvData = exportLeadsToCsv(leads);
-    const fileName = `meta_ad_library_leads_${Date.now()}.csv`;
+    const csvData = exportLeadsToCsv(leads, run);
+    const fileName = `meta_ad_library_leads_${run ? run.runId : Date.now()}.csv`;
     downloadFile(csvData, fileName, "text/csv;charset=utf-8;");
   };
   const handleExportJson = (run) => {
@@ -15807,6 +17011,88 @@ var ExtensionApp = () => {
     downloadFile(jsonData, fileName, "application/json;charset=utf-8;");
   };
   const isRunning = activeRun && (activeRun.status === "STARTING" || activeRun.status === "NAVIGATING" || activeRun.status === "COLLECTING" || activeRun.status === "NORMALIZING");
+  const isStale = activeRun && activeRun.status === "RECOVERY_REQUIRED";
+  const formatStatus = (status) => {
+    switch (status) {
+      case "STARTING":
+        return "Initializing";
+      case "NAVIGATING":
+        return "Loading Search";
+      case "COLLECTING":
+        return "Extracting Ads";
+      case "NORMALIZING":
+        return "Filtering Relevance";
+      case "COMPLETED":
+        return "Completed";
+      case "PARTIAL":
+        return "Partial Result";
+      case "CANCELLED":
+        return "Cancelled";
+      case "BROWSER_TAB_CLOSED":
+        return "Ad Library Tab Closed";
+      case "BROWSER_INTERRUPTED":
+        return "Session Interrupted";
+      case "BLOCKED":
+        return "Access Restricted";
+      case "RATE_LIMITED":
+        return "Meta Access Rate-Limited";
+      case "CHALLENGED":
+        return "Meta Security Check Required";
+      case "FAILED":
+        return "Failed";
+      case "RECOVERY_REQUIRED":
+        return "Incomplete Session (Recovery Needed)";
+      default:
+        return status.replace(/_/g, " ");
+    }
+  };
+  const formatStopReason = (reason) => {
+    if (!reason) return "";
+    switch (reason) {
+      case "TARGET_REACHED":
+        return "Target Quota Reached";
+      case "SOURCE_EXHAUSTED":
+      case "SOURCE_EXHAUSTED_VERIFIED":
+        return "Search Results Exhausted";
+      case "SOURCE_PROGRESS_STALLED":
+        return "Ad Library Stalled \u2014 No New Ads Observed";
+      case "NO_NEW_RESULTS_OBSERVED":
+        return "No Ads Observed for Query";
+      case "USER_CANCELLED":
+        return "Cancelled by User";
+      case "BROWSER_TAB_CLOSED":
+        return "Ad Library Tab Closed";
+      case "BROWSER_INTERRUPTED":
+      case "STALE_JOB_TIMEOUT":
+        return "Session Interrupted";
+      case "CHALLENGED":
+      case "CHALLENGE_DETECTED":
+        return "Meta Security Check Required";
+      case "RATE_LIMITED":
+        return "Meta Access Rate-Limited";
+      case "FAILED":
+      case "FATAL_ERROR":
+        return "Unrecoverable Execution Error";
+      default:
+        return reason.replace(/_/g, " ");
+    }
+  };
+  const formatEvidenceType = (type) => {
+    switch (type) {
+      case "ENTITY_IDENTITY":
+        return "Business Identity";
+      case "CATEGORY_MATCH":
+        return "Industry Match";
+      case "COMMERCIAL_INTENT":
+        return "Commercial Intent";
+      case "NEGATIVE_CATEGORY":
+        return "Category Conflict";
+      case "CONTRADICTION":
+        return "Hard Contradiction";
+      default:
+        return type.replace(/_/g, " ");
+    }
+  };
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex flex-col h-screen w-full bg-slate-900 text-slate-100 text-xs antialiased font-sans select-none overflow-hidden", children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { className: "flex items-center justify-between px-3 py-2.5 bg-slate-950 border-b border-slate-800", children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-2", children: [
@@ -15863,9 +17149,24 @@ var ExtensionApp = () => {
       )
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", { className: "flex-1 overflow-y-auto p-3 space-y-3", children: [
-      statusMessage && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-2 bg-blue-950/60 border border-blue-800/60 rounded text-[11px] text-blue-200 flex items-start gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RefreshCw, { className: "w-3.5 h-3.5 mt-0.5 text-blue-400 flex-shrink-0 animate-spin" }),
+      statusMessage && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: `p-2 border rounded text-[11px] flex items-start gap-2 ${statusMessage.includes("Failed") || statusMessage.includes("Error") || statusMessage.includes("blocked") ? "bg-rose-950/60 border-rose-800/60 text-rose-200" : "bg-blue-950/60 border-blue-800/60 text-blue-200"}`, children: [
+        isRunning ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RefreshCw, { className: "w-3.5 h-3.5 mt-0.5 text-blue-400 flex-shrink-0 animate-spin" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, { className: "w-3.5 h-3.5 mt-0.5 text-amber-400 flex-shrink-0" }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "break-words", children: statusMessage })
+      ] }),
+      isStale && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-3 bg-amber-950/60 border border-amber-800/60 rounded-lg space-y-2", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-2 text-amber-300 font-semibold text-xs", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TriangleAlert, { className: "w-4 h-4" }),
+          "Incomplete Research Detected"
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "text-[10px] text-amber-200/80 leading-relaxed", children: "The previous research session was interrupted (browser restart or service worker timeout). Leads collected so far are preserved. You can start a new research to continue." }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          "button",
+          {
+            onClick: () => setActiveTab("RESEARCH"),
+            className: "px-3 py-1 bg-amber-700 hover:bg-amber-600 text-white rounded text-[10px] font-medium transition-colors",
+            children: "Configure New Run"
+          }
+        )
       ] }),
       activeTab === "RESEARCH" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "space-y-3", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-2.5 bg-slate-800/50 border border-slate-700/60 rounded-lg space-y-2", children: [
@@ -16007,7 +17308,7 @@ var ExtensionApp = () => {
                 ] })
               ] })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex items-center gap-1", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: `px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${activeRun.status === "COMPLETED" ? "bg-emerald-950 text-emerald-300 border border-emerald-700" : activeRun.status === "CANCELLED" ? "bg-amber-950 text-amber-300 border border-amber-700" : activeRun.status === "BLOCKED" ? "bg-rose-950 text-rose-300 border border-rose-700" : "bg-blue-950 text-blue-300 border border-blue-700 animate-pulse"}`, children: activeRun.status }) })
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex items-center gap-1", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: `px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${activeRun.status === "COMPLETED" ? "bg-emerald-950 text-emerald-300 border border-emerald-700" : activeRun.status === "PARTIAL" ? "bg-amber-950/80 text-amber-300 border border-amber-700/80" : activeRun.status === "CANCELLED" ? "bg-amber-950 text-amber-300 border border-amber-700" : activeRun.status === "BLOCKED" ? "bg-rose-950 text-rose-300 border border-rose-700" : activeRun.status === "RECOVERY_REQUIRED" ? "bg-amber-950/50 text-amber-400 border border-amber-700/50" : activeRun.status === "FAILED" ? "bg-rose-950 text-rose-300 border border-rose-700" : "bg-blue-950 text-blue-300 border border-blue-700 animate-pulse"}`, children: formatStatus(activeRun.status) }) })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "grid grid-cols-3 gap-1.5 pt-1 text-center", children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-1.5 bg-slate-900 rounded border border-slate-800", children: [
@@ -16042,14 +17343,18 @@ var ExtensionApp = () => {
                   "Stop Research"
                 ]
               }
-            ) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-[10px] text-slate-400", children: activeRun.leads.length >= activeRun.maxResults ? "\u2713 Full quota reached" : "Research stopped" }),
+            ) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-[10px] text-slate-400", children: activeRun.stopReason ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-slate-300 font-medium", children: [
+              "(",
+              formatStopReason(activeRun.stopReason),
+              ")"
+            ] }) : activeRun.leads.length >= activeRun.maxResults ? "\u2713 Target quota reached" : "Research stopped" }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-1", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
                 "button",
                 {
                   type: "button",
                   disabled: activeRun.leads.length === 0,
-                  onClick: () => handleExportCsv(activeRun.leads),
+                  onClick: () => handleExportCsv(activeRun.leads, activeRun),
                   className: "px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 rounded text-[10px] flex items-center gap-1",
                   title: "Export RFC-4180 CSV with Formula Injection Protection",
                   children: [
@@ -16077,11 +17382,11 @@ var ExtensionApp = () => {
         /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "space-y-1.5", children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center justify-between text-[11px] font-semibold text-slate-300 px-1", children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-              "Discovered Leads (",
+              "Relevant Leads (",
               activeRun.leads.length,
               ")"
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[9px] text-slate-500 font-normal", children: "Click a lead to inspect" })
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[9px] text-slate-400 font-normal", children: activeRun.rejectedLeadsCount ? `${activeRun.rejectedLeadsCount} irrelevant excluded` : "Click lead to inspect" })
           ] }),
           activeRun.leads.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "p-4 bg-slate-800/30 border border-dashed border-slate-700 rounded-lg text-center text-slate-500 text-[11px]", children: isRunning ? "Actively extracting ad cards from Meta Ad Library..." : "No leads found yet. Start research above." }) : activeRun.leads.map((lead) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
             "div",
@@ -16091,10 +17396,18 @@ var ExtensionApp = () => {
               children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-start justify-between gap-1", children: [
                   /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "font-semibold text-slate-100 text-xs truncate max-w-[220px]", children: lead.name }),
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "px-1.5 py-0.2 bg-blue-950 border border-blue-800 text-blue-300 rounded text-[9px] font-mono whitespace-nowrap", children: [
-                    lead.activeAdCount,
-                    " ",
-                    lead.activeAdCount === 1 ? "ad" : "ads"
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-1", children: [
+                    lead.relevanceDecision && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "px-1.5 py-0.2 bg-emerald-950 border border-emerald-800 text-emerald-300 rounded text-[9px] font-mono whitespace-nowrap", children: [
+                      lead.relevanceDecision,
+                      " (",
+                      Math.round((lead.relevanceScore || 1) * 100),
+                      "%)"
+                    ] }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "px-1.5 py-0.2 bg-blue-950 border border-blue-800 text-blue-300 rounded text-[9px] font-mono whitespace-nowrap", children: [
+                      lead.activeAdCount,
+                      " ",
+                      lead.activeAdCount === 1 ? "ad" : "ads"
+                    ] })
                   ] })
                 ] }),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-2 mt-1.5 text-[10px]", children: [
@@ -16207,6 +17520,49 @@ var ExtensionApp = () => {
                 selectedLead.sampleCopy,
                 '"'
               ] })
+            ] }),
+            selectedLead.relevanceDecision && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "mt-1.5 pt-1.5 border-t border-slate-800 space-y-1.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center justify-between", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-slate-400 font-semibold", children: "Strict Relevance Gate:" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "px-1.5 py-0.2 bg-blue-950/80 border border-blue-800/80 text-blue-300 rounded text-[8px] font-mono", children: selectedLead.engineVersion || "strict-v2" })
+                ] }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "px-1.5 py-0.2 bg-emerald-950 border border-emerald-800 text-emerald-300 rounded text-[9px]", children: [
+                  selectedLead.relevanceDecision,
+                  " (",
+                  selectedLead.relevanceConfidence || "HIGH",
+                  ") \u2022 ",
+                  Math.round((selectedLead.relevanceScore || 1) * 100),
+                  "%"
+                ] })
+              ] }),
+              selectedLead.relevanceMatchedTerms && selectedLead.relevanceMatchedTerms.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "text-[9px] text-slate-400", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-slate-500", children: "Matched Category Terms: " }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-blue-300", children: selectedLead.relevanceMatchedTerms.join(", ") })
+              ] }),
+              selectedLead.relevanceReasons && selectedLead.relevanceReasons.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "space-y-0.5 mt-1 bg-slate-900/90 p-1.5 rounded border border-slate-800/80", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[9px] text-slate-500 block", children: "Evaluation & Signals:" }),
+                selectedLead.relevanceReasons.map((r, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "text-[9px] text-slate-300 flex items-start gap-1", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-emerald-400", children: "\u2022" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: r })
+                ] }, i))
+              ] }),
+              selectedLead.relevanceEvidence && selectedLead.relevanceEvidence.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "space-y-1 mt-1", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[9px] text-slate-500 block", children: "Verified Evidence Breakdown:" }),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex flex-wrap gap-1", children: selectedLead.relevanceEvidence.map((ev, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+                  "span",
+                  {
+                    className: `px-1.5 py-0.5 rounded text-[8px] font-mono border ${ev.type === "ENTITY_IDENTITY" ? "bg-blue-950/60 border-blue-800/60 text-blue-300" : ev.type === "CATEGORY_MATCH" ? "bg-emerald-950/60 border-emerald-800/60 text-emerald-300" : ev.type === "COMMERCIAL_INTENT" ? "bg-amber-950/60 border-amber-800/60 text-amber-300" : "bg-slate-800 border-slate-700 text-slate-300"}`,
+                    title: ev.reason,
+                    children: [
+                      formatEvidenceType(ev.type),
+                      ": ",
+                      ev.strength
+                    ]
+                  },
+                  i
+                )) })
+              ] })
             ] })
           ] })
         ] })
@@ -16250,13 +17606,15 @@ var ExtensionApp = () => {
             children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center justify-between", children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "font-semibold text-white text-xs", children: run.researchName }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: `px-1.5 py-0.2 rounded text-[9px] font-semibold uppercase ${run.status === "COMPLETED" ? "bg-emerald-950 text-emerald-300" : "bg-slate-800 text-slate-400"}`, children: run.status })
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: `px-1.5 py-0.2 rounded text-[9px] font-semibold uppercase ${run.status === "COMPLETED" ? "bg-emerald-950 text-emerald-300" : run.status === "PARTIAL" ? "bg-amber-950/80 text-amber-300" : run.status === "CANCELLED" ? "bg-amber-950 text-amber-300" : run.status === "RECOVERY_REQUIRED" ? "bg-amber-900 text-amber-200" : "bg-slate-800 text-slate-400"}`, children: formatStatus(run.status) })
               ] }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "text-[10px] text-slate-400 flex items-center justify-between", children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
                   run.locationName,
                   " \u2022 ",
                   run.leads.length,
+                  " of ",
+                  run.targetLeadCount || run.maxResults,
                   " leads"
                 ] }),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: new Date(run.startedAt).toLocaleDateString() })
@@ -16279,7 +17637,7 @@ var ExtensionApp = () => {
                   {
                     type: "button",
                     disabled: run.leads.length === 0,
-                    onClick: () => handleExportCsv(run.leads),
+                    onClick: () => handleExportCsv(run.leads, run),
                     className: "px-2 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-emerald-400 rounded text-[10px] flex items-center gap-1",
                     children: [
                       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileSpreadsheet, { className: "w-2.5 h-2.5" }),
@@ -16381,6 +17739,7 @@ lucide-react/dist/esm/icons/sliders-vertical.js:
 lucide-react/dist/esm/icons/square.js:
 lucide-react/dist/esm/icons/tag.js:
 lucide-react/dist/esm/icons/trash-2.js:
+lucide-react/dist/esm/icons/triangle-alert.js:
 lucide-react/dist/esm/lucide-react.js:
   (**
    * @license lucide-react v0.546.0 - ISC

@@ -1,0 +1,428 @@
+[
+  {
+    "test": "Live 5",
+    "requested": 5,
+    "final": 5,
+    "rawAds": 29,
+    "relevant": 5,
+    "irrelevant": 12,
+    "uncertain": 2,
+    "duplicates": 10,
+    "stopReason": "TARGET_REACHED",
+    "status": "PASS",
+    "elapsed": "6.1s",
+    "searchUrl": "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=BD&q=Furniture",
+    "leadsSample": [
+      {
+        "name": "RFL Furniture",
+        "activeAds": 4,
+        "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/RFLfurniture/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 1,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Dreamline Outdoor Furniture",
+        "activeAds": 1,
+        "website": "https://dreamlineoutdoorfurniture.com/collections/swings",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/dreamlineoutdoorfurniturejaipur/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.75,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Hospitality Furniture Concepts",
+        "activeAds": 1,
+        "website": "https://www.hospitalityfurniture.net.au/beam-seating/",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.9,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Amazon Home India",
+        "activeAds": 1,
+        "website": "https://www.amazon.in/dp/B0F7XSGCGF?ref_=pfb_spv01_5bc232656d02b7a130fc8e8746c44e99",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/amazonhomeindia/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.45,
+        "confidence": "MEDIUM"
+      },
+      {
+        "name": "Raymour & Flanigan Furniture and Mattresses",
+        "activeAds": 1,
+        "website": "https://www.raymourflanigan.com/mattresses?utm_source=Facebook&utm_medium=Social&utm_campaign=reachmattress_evergreen&utm_content=tempur_review",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/raymourandflanigan/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.57,
+        "confidence": "MEDIUM"
+      }
+    ]
+  },
+  {
+    "test": "Live 10",
+    "requested": 10,
+    "final": 6,
+    "rawAds": 29,
+    "relevant": 6,
+    "irrelevant": 13,
+    "uncertain": 2,
+    "duplicates": 8,
+    "stopReason": "SOURCE_EXHAUSTED",
+    "status": "PARTIAL",
+    "elapsed": "10.1s",
+    "searchUrl": "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=BD&q=Furniture",
+    "leadsSample": [
+      {
+        "name": "RFL Furniture",
+        "activeAds": 4,
+        "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/RFLfurniture/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 1,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Dreamline Outdoor Furniture",
+        "activeAds": 1,
+        "website": "https://dreamlineoutdoorfurniture.com/collections/swings",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/dreamlineoutdoorfurniturejaipur/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.75,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Hospitality Furniture Concepts",
+        "activeAds": 1,
+        "website": "https://www.hospitalityfurniture.net.au/beam-seating/",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.9,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Raymour & Flanigan Furniture and Mattresses",
+        "activeAds": 1,
+        "website": "https://www.raymourflanigan.com/mattresses?utm_source=Facebook&utm_medium=Social&utm_campaign=reachmattress_evergreen&utm_content=tempur_review",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/raymourandflanigan/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.57,
+        "confidence": "MEDIUM"
+      },
+      {
+        "name": "Strawberry - Lifestyle & Fashion",
+        "activeAds": 1,
+        "website": "https://www.hometalk.com/dcg/How to decorate your home with easy payments/?source=facebook&lang=en&adtext=Learn more about sofas and furniture on installments&theme=dark_mode&cid=3103991662&sid=4388678308&adid={{ad.id}}&terms=Sofas with Zero Upfront Payment Free Delivery,Pay Monthly Sofas with no Credit Check no Deposit,Sofa on Finance Bad Credit no Deposit {country} no Upfront Cost,{country}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,{city}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,Sofa Pay Monthly no Credit Check",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/61552620205087/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.47,
+        "confidence": "MEDIUM"
+      }
+    ]
+  },
+  {
+    "test": "Live 25",
+    "requested": 25,
+    "final": 6,
+    "rawAds": 29,
+    "relevant": 6,
+    "irrelevant": 13,
+    "uncertain": 2,
+    "duplicates": 8,
+    "stopReason": "SOURCE_EXHAUSTED",
+    "status": "PARTIAL",
+    "elapsed": "10.1s",
+    "searchUrl": "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=BD&q=Furniture",
+    "leadsSample": [
+      {
+        "name": "RFL Furniture",
+        "activeAds": 4,
+        "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/RFLfurniture/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 1,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Dreamline Outdoor Furniture",
+        "activeAds": 1,
+        "website": "https://dreamlineoutdoorfurniture.com/collections/swings",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/dreamlineoutdoorfurniturejaipur/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.75,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Hospitality Furniture Concepts",
+        "activeAds": 1,
+        "website": "https://www.hospitalityfurniture.net.au/beam-seating/",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.9,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Raymour & Flanigan Furniture and Mattresses",
+        "activeAds": 1,
+        "website": "https://www.raymourflanigan.com/mattresses?utm_source=Facebook&utm_medium=Social&utm_campaign=reachmattress_evergreen&utm_content=tempur_review",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/raymourandflanigan/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.57,
+        "confidence": "MEDIUM"
+      },
+      {
+        "name": "Strawberry - Lifestyle & Fashion",
+        "activeAds": 1,
+        "website": "https://www.hometalk.com/dcg/How to decorate your home with easy payments/?source=facebook&lang=en&adtext=Learn more about sofas and furniture on installments&theme=dark_mode&cid=3103991662&sid=4388678308&adid={{ad.id}}&terms=Sofas with Zero Upfront Payment Free Delivery,Pay Monthly Sofas with no Credit Check no Deposit,Sofa on Finance Bad Credit no Deposit {country} no Upfront Cost,{country}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,{city}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,Sofa Pay Monthly no Credit Check",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/61552620205087/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.47,
+        "confidence": "MEDIUM"
+      }
+    ]
+  },
+  {
+    "test": "Live 50",
+    "requested": 50,
+    "final": 7,
+    "rawAds": 29,
+    "relevant": 7,
+    "irrelevant": 12,
+    "uncertain": 2,
+    "duplicates": 8,
+    "stopReason": "SOURCE_EXHAUSTED",
+    "status": "PARTIAL",
+    "elapsed": "10.0s",
+    "searchUrl": "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=BD&q=Furniture",
+    "leadsSample": [
+      {
+        "name": "RFL Furniture",
+        "activeAds": 4,
+        "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/RFLfurniture/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 1,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Dreamline Outdoor Furniture",
+        "activeAds": 1,
+        "website": "https://dreamlineoutdoorfurniture.com/collections/swings",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/dreamlineoutdoorfurniturejaipur/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.75,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Hospitality Furniture Concepts",
+        "activeAds": 1,
+        "website": "https://www.hospitalityfurniture.net.au/beam-seating/",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.9,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Amazon Home India",
+        "activeAds": 1,
+        "website": "https://www.amazon.in/dp/B0F7XSGCGF?ref_=pfb_spv01_5bc232656d02b7a130fc8e8746c44e99",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/amazonhomeindia/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.45,
+        "confidence": "MEDIUM"
+      },
+      {
+        "name": "Raymour & Flanigan Furniture and Mattresses",
+        "activeAds": 1,
+        "website": "https://www.raymourflanigan.com/mattresses?utm_source=Facebook&utm_medium=Social&utm_campaign=reachmattress_evergreen&utm_content=tempur_review",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/raymourandflanigan/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.57,
+        "confidence": "MEDIUM"
+      }
+    ]
+  },
+  {
+    "test": "Live 100",
+    "requested": 100,
+    "final": 7,
+    "rawAds": 29,
+    "relevant": 7,
+    "irrelevant": 12,
+    "uncertain": 2,
+    "duplicates": 8,
+    "stopReason": "SOURCE_EXHAUSTED",
+    "status": "PARTIAL",
+    "elapsed": "10.0s",
+    "searchUrl": "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=BD&q=Furniture",
+    "leadsSample": [
+      {
+        "name": "RFL Furniture",
+        "activeAds": 4,
+        "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/RFLfurniture/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 1,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Dreamline Outdoor Furniture",
+        "activeAds": 1,
+        "website": "https://dreamlineoutdoorfurniture.com/collections/swings",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/dreamlineoutdoorfurniturejaipur/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.75,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Hospitality Furniture Concepts",
+        "activeAds": 1,
+        "website": "https://www.hospitalityfurniture.net.au/beam-seating/",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.9,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Amazon Home India",
+        "activeAds": 1,
+        "website": "https://www.amazon.in/dp/B0F7XSGCGF?ref_=pfb_spv01_5bc232656d02b7a130fc8e8746c44e99",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/amazonhomeindia/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.45,
+        "confidence": "MEDIUM"
+      },
+      {
+        "name": "Raymour & Flanigan Furniture and Mattresses",
+        "activeAds": 1,
+        "website": "https://www.raymourflanigan.com/mattresses?utm_source=Facebook&utm_medium=Social&utm_campaign=reachmattress_evergreen&utm_content=tempur_review",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/raymourandflanigan/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.57,
+        "confidence": "MEDIUM"
+      }
+    ]
+  },
+  {
+    "test": "Live 500",
+    "requested": 500,
+    "final": 6,
+    "rawAds": 29,
+    "relevant": 6,
+    "irrelevant": 13,
+    "uncertain": 2,
+    "duplicates": 8,
+    "stopReason": "SOURCE_EXHAUSTED",
+    "status": "PARTIAL",
+    "elapsed": "10.0s",
+    "searchUrl": "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=BD&q=Furniture",
+    "leadsSample": [
+      {
+        "name": "RFL Furniture",
+        "activeAds": 4,
+        "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/RFLfurniture/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 1,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Dreamline Outdoor Furniture",
+        "activeAds": 1,
+        "website": "https://dreamlineoutdoorfurniture.com/collections/swings",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/dreamlineoutdoorfurniturejaipur/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.75,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Hospitality Furniture Concepts",
+        "activeAds": 1,
+        "website": "https://www.hospitalityfurniture.net.au/beam-seating/",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.9,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Raymour & Flanigan Furniture and Mattresses",
+        "activeAds": 1,
+        "website": "https://www.raymourflanigan.com/mattresses?utm_source=Facebook&utm_medium=Social&utm_campaign=reachmattress_evergreen&utm_content=tempur_review",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/raymourandflanigan/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.57,
+        "confidence": "MEDIUM"
+      },
+      {
+        "name": "Strawberry - Lifestyle & Fashion",
+        "activeAds": 1,
+        "website": "https://www.hometalk.com/dcg/How to decorate your home with easy payments/?source=facebook&lang=en&adtext=Learn more about sofas and furniture on installments&theme=dark_mode&cid=3103991662&sid=4388678308&adid={{ad.id}}&terms=Sofas with Zero Upfront Payment Free Delivery,Pay Monthly Sofas with no Credit Check no Deposit,Sofa on Finance Bad Credit no Deposit {country} no Upfront Cost,{country}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,{city}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,Sofa Pay Monthly no Credit Check",
+        "websiteState": "found",
+        "pageUrl": "https://www.facebook.com/61552620205087/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.47,
+        "confidence": "MEDIUM"
+      }
+    ]
+  }
+]
