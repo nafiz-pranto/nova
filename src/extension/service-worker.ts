@@ -3,15 +3,29 @@
  * Manages research runs, tab orchestration, extraction loop, deduplication, and persistence in chrome.storage.local
  */
 
+import {
+  MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH
+} from './types.ts';
 import type {
   ExtensionMessage,
   ExtensionResearchRun,
   ExtensionLead,
   StartResearchPayload,
-  ScrapedAdCandidate
+  ScrapedAdCandidate,
+  RunCounters
 } from './types.ts';
 import { aggregateCandidatesToLeads } from './metaAdapter.ts';
 import { compileResearchIntent, RELEVANCE_STRATEGY_VERSION, RELEVANCE_ENGINE_VERSION } from './relevanceEngine.ts';
+import {
+  initBulkStore,
+  saveRunRecord,
+  saveBatch,
+  getAllRelevantLeads,
+  getSeenAdIds,
+  getSeenEntityKeys,
+  getLatestCheckpoint
+} from './bulkStore.ts';
+import { processBatch } from './bulkProcessor.ts';
 
 console.log('[Meta Ad Library Scraper] Service Worker initializing...');
 
@@ -95,13 +109,15 @@ function broadcastProgress(run: ExtensionResearchRun, stage: string, logMessage:
 
   saveActiveRun(run).catch(() => {});
 
+  const authoritativeLeadCount = run.counters?.finalUniqueRelevantLeads ?? run.counters?.finalUniqueLeads ?? run.leads.length;
+
   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
     chrome.runtime.sendMessage({
       type: 'RESEARCH_PROGRESS',
       payload: {
         runId: run.runId,
         status: run.status,
-        leadCount: run.leads.length,
+        leadCount: authoritativeLeadCount,
         maxResults: run.maxResults,
         totalAdsInspected: run.totalAdsInspected,
         logMessage,
@@ -169,7 +185,11 @@ async function executeResearchPipeline(
 
   const keywords = payload.keywords.map(k => k.trim()).filter(Boolean);
   const countryCode = payload.countryCode || 'US';
-  const targetLeadCount = Math.max(1, payload.maxResults || 10);
+  const isAutoDiscovery = payload.researchMode === 'AUTO_DISCOVERY' || payload.maxResults === undefined;
+  const effectiveCeiling = isAutoDiscovery
+    ? MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH
+    : Math.min(Math.max(1, payload.maxResults || MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH), MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH);
+  const targetLeadCount = isAutoDiscovery ? undefined : effectiveCeiling;
 
   const researchIntent = compileResearchIntent(
     payload.mode,
@@ -187,7 +207,10 @@ async function executeResearchPipeline(
     keywords,
     countryCode,
     locationName: payload.locationName,
-    maxResults: targetLeadCount,
+    researchMode: isAutoDiscovery ? 'AUTO_DISCOVERY' : undefined,
+    maxFinalUniqueRelevantLeads: isAutoDiscovery ? MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH : undefined,
+    maxResults: payload.maxResults ?? effectiveCeiling,
+    targetLeadCount: targetLeadCount,
     status: 'STARTING',
     leads: [],
     rejectedLeadsCount: 0,
@@ -207,26 +230,45 @@ async function executeResearchPipeline(
     startedAt: new Date().toISOString(),
     lastUpdatedAt: new Date().toISOString(),
     schemaVersion: SCHEMA_VERSION,
-    totalAdsInspected: 0,
-    targetLeadCount
+    totalAdsInspected: 0
   };
 
+  // Initialize bulk storage engine (IndexedDB)
+  await initBulkStore();
+  const seenAdLibraryIds = await getSeenAdIds(runId);
+  const seenEntityKeys = await getSeenEntityKeys(runId);
+  const existingEntitiesMap = new Map<string, ExtensionLead>();
+
+  // If resuming, populate existing entities
+  const existingLeads = await getAllRelevantLeads(runId);
+  for (const lead of existingLeads) {
+    const canonicalKey = lead.canonicalName ? lead.canonicalName.toLowerCase() : lead.name.toLowerCase();
+    existingEntitiesMap.set(canonicalKey, lead);
+  }
+
   await saveActiveRun(initialRun);
-  broadcastProgress(initialRun, 'STARTING', `Research initiated for ${targetLeadCount} leads in ${payload.locationName}...`);
+  const startBroadcastMsg = isAutoDiscovery
+    ? `Auto-discovery research initiated in ${payload.locationName}...`
+    : `Research initiated for ${targetLeadCount} leads in ${payload.locationName}...`;
+  broadcastProgress(initialRun, 'STARTING', startBroadcastMsg);
 
   let currentTabId: number | null = null;
-  let allCandidates: ScrapedAdCandidate[] = initialRun.allCandidates || [];
-
   const startKi = initialRun.activeKeywordIndex || 0;
+  const completedKeywords: string[] = [...(initialRun.frontier?.completedKeywords || [])];
   let isStalled = false;
+  let batchIndex = initialRun.lastCheckpointBatch || 0;
 
   try {
     for (let ki = startKi; ki < keywords.length; ki++) {
       if (cancelledRuns.has(runId)) break;
-      if (initialRun.leads.length >= targetLeadCount) break;
+      const currentLeadCount = initialRun.counters?.finalUniqueRelevantLeads ?? initialRun.counters?.finalUniqueLeads ?? existingEntitiesMap.size;
+      if (currentLeadCount >= effectiveCeiling) break;
 
       const currentKeyword = keywords[ki];
       initialRun.activeKeywordIndex = ki;
+      initialRun.currentKeyword = currentKeyword;
+      initialRun.keywordsCompleted = completedKeywords.length;
+      initialRun.totalKeywords = keywords.length;
       initialRun.status = 'NAVIGATING';
 
       const searchUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=${encodeURIComponent(countryCode)}&q=${encodeURIComponent(currentKeyword)}`;
@@ -252,11 +294,12 @@ async function executeResearchPipeline(
 
       let consecutiveNoNewCards = 0;
       let scrollAttempts = 0;
-      // Scale max scroll iterations with requested quota while respecting source exhaustion
-      const maxScrolls = Math.max(25, Math.ceil(targetLeadCount * 3));
+      // In Auto-Discovery mode, scroll through accessible results for currentKeyword until source exhaustion or stall
+      const maxScrolls = isAutoDiscovery ? 60 : Math.max(25, Math.ceil((targetLeadCount || 10) * 3));
 
       while (scrollAttempts < maxScrolls && !cancelledRuns.has(runId)) {
-        if (initialRun.leads.length >= targetLeadCount) break;
+        const liveCount = initialRun.counters?.finalUniqueRelevantLeads ?? initialRun.counters?.finalUniqueLeads ?? existingEntitiesMap.size;
+        if (liveCount >= effectiveCeiling) break;
 
         scrollAttempts++;
 
@@ -306,6 +349,7 @@ async function executeResearchPipeline(
           initialRun.challengeReason = response.reason || 'Meta Ad Library security challenge presented.';
           initialRun.stopReason = isRateLimit ? 'RATE_LIMITED' : 'CHALLENGED';
           broadcastProgress(initialRun, initialRun.status, `Access restricted: ${initialRun.challengeReason}`);
+          await saveRunRecord(initialRun);
           await saveActiveRun(initialRun);
           await appendToHistory(initialRun);
           return initialRun;
@@ -314,46 +358,112 @@ async function executeResearchPipeline(
         const candidates: ScrapedAdCandidate[] = (response && response.payload && response.payload.candidates) || [];
 
         if (candidates.length > 0) {
-          const prevCandidatesCount = allCandidates.length;
-          // Merge newly found candidates
-          for (const cand of candidates) {
-            if (!allCandidates.some(c => c.libraryId === cand.libraryId)) {
-              allCandidates.push(cand);
-            }
-          }
+          batchIndex++;
 
-          const newlyAdded = allCandidates.length - prevCandidatesCount;
-          if (newlyAdded === 0) {
+          // Bounded batch processing: dedup, entity identity, Strict Relevance Gate v2, anti-inflation, 5000 ceiling
+          const batchResult = await processBatch(
+            candidates,
+            existingEntitiesMap,
+            seenAdLibraryIds,
+            seenEntityKeys,
+            initialRun.counters || {
+              rawAds: 0,
+              normalizedCandidates: 0,
+              relevantCandidates: 0,
+              uncertainCandidates: 0,
+              notRelevantCandidates: 0,
+              duplicatesRemoved: 0,
+              finalUniqueLeads: 0,
+              uniqueEntitiesObserved: 0,
+              relevantEntities: 0,
+              uncertainEntities: 0,
+              notRelevantEntities: 0,
+              keywordsCompleted: completedKeywords.length,
+              keywordsTotal: keywords.length,
+              finalUniqueRelevantLeads: 0,
+              reasonCodes: {}
+            },
+            {
+              runId,
+              countryCode,
+              locationName: payload.locationName,
+              currentKeyword,
+              intent: researchIntent,
+              effectiveCeiling
+            }
+          );
+
+          // Persist batch into IndexedDB bulk store
+          await saveBatch(runId, {
+            batchIndex,
+            ads: batchResult.processedAds,
+            entities: batchResult.updatedEntities,
+            evidence: batchResult.newEvidence,
+            checkpoint: {
+              runId,
+              batchIndex,
+              timestamp: new Date().toISOString(),
+              activeKeywordIndex: ki,
+              currentKeyword,
+              rawAdsCount: batchResult.counters.rawAds,
+              normalizedCandidatesCount: batchResult.counters.normalizedCandidates,
+              uniqueEntitiesCount: batchResult.counters.uniqueEntitiesObserved || 0,
+              relevantEntitiesCount: batchResult.counters.relevantEntities || 0,
+              uncertainEntitiesCount: batchResult.counters.uncertainEntities || 0,
+              notRelevantEntitiesCount: batchResult.counters.notRelevantEntities || 0,
+              duplicatesRemovedCount: batchResult.counters.duplicatesRemoved,
+              finalUniqueRelevantLeads: batchResult.counters.finalUniqueRelevantLeads || batchResult.counters.finalUniqueLeads,
+              seenLibraryIdsCount: seenAdLibraryIds.size,
+              seenEntityKeysCount: seenEntityKeys.size
+            }
+          });
+
+          // Maintain preview slice (up to 50 leads) for fast UI rendering
+          const allLeadsList = Array.from(existingEntitiesMap.values());
+          initialRun.leads = allLeadsList.slice(0, 50);
+          initialRun.totalAdsInspected = batchResult.counters.rawAds;
+          initialRun.counters = batchResult.counters;
+          initialRun.rejectedLeadsCount = batchResult.counters.notRelevantCandidates;
+          initialRun.uncertainLeadsCount = batchResult.counters.uncertainCandidates;
+          initialRun.lastCheckpointBatch = batchIndex;
+          initialRun.currentKeyword = currentKeyword;
+          initialRun.keywordsCompleted = completedKeywords.length;
+          initialRun.totalKeywords = keywords.length;
+          initialRun.entitiesEvaluated = batchResult.counters.uniqueEntitiesObserved || 0;
+          initialRun.frontier = {
+            activeKeywordIndex: ki,
+            keywords,
+            currentKeyword,
+            completedKeywords: [...completedKeywords],
+            seenLibraryIdsCount: seenAdLibraryIds.size,
+            seenEntityKeysCount: seenEntityKeys.size,
+            lastBatchIndex: batchIndex,
+            checkpointTimestamp: new Date().toISOString()
+          };
+
+          if (batchResult.processedAds.length === 0) {
             consecutiveNoNewCards++;
           } else {
             consecutiveNoNewCards = 0;
           }
 
-          // Aggregate, Deduplicate & Evaluate Relevance
-          const aggregated = aggregateCandidatesToLeads(
-            allCandidates,
-            countryCode,
-            payload.locationName,
-            targetLeadCount,
-            [],
-            researchIntent
-          );
-
-          initialRun.leads = aggregated.leads;
-          initialRun.totalAdsInspected = allCandidates.length;
-          initialRun.allCandidates = allCandidates;
-          initialRun.rejectedLeadsCount = aggregated.rejectedCount;
-          initialRun.uncertainLeadsCount = aggregated.uncertainCount;
-          initialRun.counters = aggregated.counters;
+          // Release memory references
+          candidates.length = 0;
+          batchResult.processedAds.length = 0;
 
           broadcastProgress(
             initialRun,
             'COLLECTING',
-            `Observed ${initialRun.leads.length} unique relevant leads from ${allCandidates.length} ads (${aggregated.rejectedCount} irrelevant filtered, scroll ${scrollAttempts})...`
+            `Discovered ${initialRun.counters.finalUniqueRelevantLeads || initialRun.counters.finalUniqueLeads} leads | Inspected ${initialRun.counters.rawAds} ads | Evaluated ${initialRun.counters.uniqueEntitiesObserved || 0} entities (${currentKeyword})...`
           );
 
-          if (initialRun.leads.length >= targetLeadCount) {
-            broadcastProgress(initialRun, 'NORMALIZING', `Target lead quota of ${targetLeadCount} reached.`);
+          const finalLeadsCount = initialRun.counters.finalUniqueRelevantLeads || initialRun.counters.finalUniqueLeads;
+          if (batchResult.safetyLimitReached || finalLeadsCount >= effectiveCeiling) {
+            if (isAutoDiscovery) {
+              broadcastProgress(initialRun, 'NORMALIZING', `5,000-lead safety limit reached.`);
+            } else {
+              broadcastProgress(initialRun, 'NORMALIZING', `Target lead quota of ${targetLeadCount} reached.`);
+            }
             break;
           }
 
@@ -372,7 +482,15 @@ async function executeResearchPipeline(
           await wait(2000);
         }
       }
+
+      completedKeywords.push(currentKeyword);
+      initialRun.keywordsCompleted = completedKeywords.length;
+      if ((initialRun.counters?.finalUniqueRelevantLeads || initialRun.counters?.finalUniqueLeads || 0) >= effectiveCeiling) {
+        break;
+      }
     }
+
+    const finalLeadCount = initialRun.counters?.finalUniqueRelevantLeads ?? initialRun.counters?.finalUniqueLeads ?? existingEntitiesMap.size;
 
     // Finalize state
     if (cancelledRuns.has(runId)) {
@@ -385,25 +503,40 @@ async function executeResearchPipeline(
       broadcastProgress(initialRun, 'BROWSER_TAB_CLOSED', `Research halted because the Ad Library tab was closed.`);
     } else if (initialRun.status === 'CHALLENGED' || initialRun.status === 'RATE_LIMITED' || initialRun.status === 'BLOCKED') {
       // Preserve security challenge or rate-limit state
-    } else {
-      if (initialRun.leads.length >= targetLeadCount) {
-        initialRun.status = 'COMPLETED';
-        initialRun.stopReason = 'TARGET_REACHED';
+    } else if (finalLeadCount >= effectiveCeiling) {
+      initialRun.status = 'COMPLETED';
+      if (isAutoDiscovery) {
+        initialRun.stopReason = 'SAFETY_LIMIT_REACHED';
+        broadcastProgress(
+          initialRun,
+          'COMPLETED',
+          `Research stopped at the current system safety limit of 5,000 unique relevant leads.`
+        );
       } else {
-        initialRun.status = 'PARTIAL';
-        if (allCandidates.length === 0) {
-          initialRun.stopReason = 'NO_NEW_RESULTS_OBSERVED';
-        } else if (isStalled) {
-          initialRun.stopReason = 'SOURCE_PROGRESS_STALLED';
-        } else {
-          initialRun.stopReason = 'SOURCE_EXHAUSTED';
-        }
+        initialRun.stopReason = 'TARGET_REACHED';
+        broadcastProgress(
+          initialRun,
+          'COMPLETED',
+          `Target lead quota of ${targetLeadCount} reached.`
+        );
+      }
+    } else {
+      initialRun.status = 'PARTIAL';
+      if (initialRun.totalAdsInspected === 0) {
+        initialRun.stopReason = 'NO_NEW_RESULTS_OBSERVED';
+      } else if (isStalled) {
+        initialRun.stopReason = 'SOURCE_PROGRESS_STALLED';
+      } else {
+        initialRun.stopReason = 'SOURCE_EXHAUSTED';
       }
       initialRun.completedAt = new Date().toISOString();
+      const completionMsg = isAutoDiscovery
+        ? `Auto-discovery finished (${initialRun.status} / ${initialRun.stopReason}): ${finalLeadCount} qualifying unique relevant leads discovered from ${initialRun.totalAdsInspected} public ads.`
+        : `Research finished (${initialRun.status} / ${initialRun.stopReason}): ${finalLeadCount} of ${targetLeadCount} requested unique relevant leads observed from ${initialRun.totalAdsInspected} public ads.`;
       broadcastProgress(
         initialRun,
         initialRun.status,
-        `Research finished (${initialRun.status} / ${initialRun.stopReason}): ${initialRun.leads.length} of ${targetLeadCount} requested unique relevant leads observed from ${initialRun.totalAdsInspected} public ads.`
+        completionMsg
       );
     }
 
@@ -421,6 +554,7 @@ async function executeResearchPipeline(
     }
 
     initialRun.completedAt = new Date().toISOString();
+    await saveRunRecord(initialRun);
     await saveActiveRun(initialRun);
     await appendToHistory(initialRun);
 
@@ -451,7 +585,11 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
         }
 
         const runId = `run_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
-        const targetLeadCount = Math.max(1, message.payload.maxResults || 10);
+        const isAutoDiscovery = message.payload.researchMode === 'AUTO_DISCOVERY' || message.payload.maxResults === undefined;
+        const effectiveCeiling = isAutoDiscovery
+          ? MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH
+          : Math.min(Math.max(1, message.payload.maxResults || MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH), MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH);
+        const targetLeadCount = isAutoDiscovery ? undefined : effectiveCeiling;
         const keywords = message.payload.keywords.map(k => (k || '').trim()).filter(Boolean);
 
         const initialRun: ExtensionResearchRun = {
@@ -463,7 +601,10 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
           keywords,
           countryCode: message.payload.countryCode || 'US',
           locationName: message.payload.locationName,
-          maxResults: targetLeadCount,
+          researchMode: isAutoDiscovery ? 'AUTO_DISCOVERY' : undefined,
+          maxFinalUniqueRelevantLeads: isAutoDiscovery ? MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH : undefined,
+          maxResults: message.payload.maxResults ?? effectiveCeiling,
+          targetLeadCount,
           status: 'STARTING',
           leads: [],
           rejectedLeadsCount: 0,
@@ -483,8 +624,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
           startedAt: new Date().toISOString(),
           lastUpdatedAt: new Date().toISOString(),
           schemaVersion: SCHEMA_VERSION,
-          totalAdsInspected: 0,
-          targetLeadCount
+          totalAdsInspected: 0
         };
 
         // Persist immediate starting state
@@ -535,6 +675,57 @@ if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage)
     if (message.type === 'CLEAR_HISTORY') {
       chrome.storage.local.set({ researchHistory: [] }, () => {
         sendResponse({ success: true });
+      });
+      return true;
+    }
+
+    if (message.type === 'GET_ALL_LEADS_FOR_EXPORT') {
+      const targetRunId = message.payload?.runId;
+      if (!targetRunId) {
+        sendResponse({ success: false, error: 'runId required' });
+        return false;
+      }
+      getAllRelevantLeads(targetRunId)
+        .then(leads => {
+          sendResponse({ success: true, leads });
+        })
+        .catch(err => {
+          sendResponse({ success: false, error: err.message });
+        });
+      return true;
+    }
+
+    if (message.type === 'RESUME_RESEARCH') {
+      const targetRunId = message.payload?.runId;
+      chrome.storage.local.get(['activeResearchRun'], async (data) => {
+        const activeRun = data.activeResearchRun as ExtensionResearchRun | undefined;
+        if (!activeRun || (targetRunId && activeRun.runId !== targetRunId)) {
+          sendResponse({ success: false, error: 'No matching research run available to resume.' });
+          return;
+        }
+
+        activeRun.status = 'STARTING';
+        await saveActiveRun(activeRun);
+
+        executeResearchPipeline(
+          {
+            mode: activeRun.mode,
+            presetId: activeRun.presetId,
+            presetName: activeRun.presetName,
+            keywords: activeRun.keywords,
+            countryCode: activeRun.countryCode,
+            locationName: activeRun.locationName,
+            researchName: activeRun.researchName,
+            researchMode: activeRun.researchMode,
+            maxResults: activeRun.maxResults
+          },
+          activeRun.runId,
+          activeRun
+        ).catch(err => {
+          console.error('[service-worker] Resume execution error:', err);
+        });
+
+        sendResponse({ success: true, run: activeRun });
       });
       return true;
     }

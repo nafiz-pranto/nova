@@ -2,7 +2,10 @@
  * Chrome MV3 Meta Ad Library Scraper Extension Types
  */
 
+export const MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH = 5000;
+
 export type ResearchMode = 'CUSTOM' | 'PRESET';
+export type ResearchModelType = 'AUTO_DISCOVERY';
 
 export type JobStatus =
   | 'IDLE'
@@ -23,6 +26,7 @@ export type JobStatus =
 
 export type ResearchStopReason =
   | 'TARGET_REACHED'
+  | 'SAFETY_LIMIT_REACHED'
   | 'SOURCE_EXHAUSTED'
   | 'SOURCE_EXHAUSTED_VERIFIED'
   | 'SOURCE_PROGRESS_STALLED'
@@ -74,7 +78,26 @@ export interface RunCounters {
   notRelevantCandidates: number;
   duplicatesRemoved: number;
   finalUniqueLeads: number;
+  // Enhanced Phase 2 bulk counters
+  uniqueEntitiesObserved?: number;
+  relevantEntities?: number;
+  uncertainEntities?: number;
+  notRelevantEntities?: number;
+  keywordsCompleted?: number;
+  keywordsTotal?: number;
+  finalUniqueRelevantLeads?: number;
   reasonCodes?: Record<string, number>;
+}
+
+export interface KeywordFrontierState {
+  activeKeywordIndex: number;
+  keywords: string[];
+  currentKeyword: string;
+  completedKeywords: string[];
+  seenLibraryIdsCount: number;
+  seenEntityKeysCount: number;
+  lastBatchIndex: number;
+  checkpointTimestamp: string;
 }
 
 export interface ScrapedAdCandidate {
@@ -104,6 +127,7 @@ export interface ExtensionLead {
   destinationDomain?: string;
   websiteState: 'found' | 'not_found' | 'unknown';
   activeAdCount: number;
+  adCount?: number;
   adLibraryIds: string[];
   adLibraryUrl?: string;
   matchedKeywords: string[];
@@ -134,7 +158,12 @@ export interface ExtensionResearchRun {
   keywords: string[];
   countryCode: string;
   locationName: string;
-  maxResults: number;
+  // Auto-Discovery fields (Phase 1)
+  researchMode?: 'AUTO_DISCOVERY';
+  maxFinalUniqueRelevantLeads?: number;
+  // Legacy backward-compatibility metadata
+  maxResults?: number;
+  targetLeadCount?: number;
   status: JobStatus;
   stopReason?: string;
   challengeReason?: string;
@@ -155,8 +184,13 @@ export interface ExtensionResearchRun {
   schemaVersion: number;
   totalAdsInspected: number;
   allCandidates?: ScrapedAdCandidate[];
-  targetLeadCount: number;
   activeKeywordIndex?: number;
+  currentKeyword?: string;
+  keywordsCompleted?: number;
+  totalKeywords?: number;
+  entitiesEvaluated?: number;
+  lastCheckpointBatch?: number;
+  frontier?: KeywordFrontierState;
 }
 
 export interface StartResearchPayload {
@@ -166,8 +200,12 @@ export interface StartResearchPayload {
   keywords: string[];
   countryCode: string;
   locationName: string;
-  maxResults: number;
   researchName?: string;
+  // Auto-Discovery fields (Phase 1)
+  researchMode?: 'AUTO_DISCOVERY';
+  maxFinalUniqueRelevantLeads?: number;
+  // Legacy backward-compatibility
+  maxResults?: number;
 }
 
 export interface ExtensionMessage {
@@ -175,9 +213,11 @@ export interface ExtensionMessage {
     | 'START_RESEARCH'
     | 'STOP_RESEARCH'
     | 'CANCEL_RESEARCH'
+    | 'RESUME_RESEARCH'
     | 'GET_STATE'
     | 'GET_HISTORY'
     | 'CLEAR_HISTORY'
+    | 'GET_ALL_LEADS_FOR_EXPORT'
     | 'RESEARCH_PROGRESS'
     | 'RESEARCH_COMPLETED'
     | 'SCAN_AND_EXTRACT'

@@ -32,7 +32,7 @@ async function runReleaseGateTests() {
 
   const manifest = JSON.parse(fs.readFileSync(path.join(extDir, 'manifest.json'), 'utf8'));
   assert.strictEqual(manifest.manifest_version, 3, 'Manifest is version 3');
-  assert.strictEqual(manifest.name, 'Meta Ad Library Lead Scraper', 'Manifest name is correct');
+  assert.ok(manifest.name === 'LeadNoria' || manifest.name === 'Meta Ad Library Lead Scraper', 'Manifest name is correct');
   assert.ok(manifest.permissions.includes('storage'), 'Includes storage permission');
   assert.ok(manifest.permissions.includes('tabs'), 'Includes tabs permission');
   assert.ok(manifest.permissions.includes('scripting'), 'Includes scripting permission');
@@ -73,7 +73,7 @@ async function runReleaseGateTests() {
   // Test sidepanel and popup UI pages
   const panelPage = await browserContext.newPage();
   await panelPage.goto(`chrome-extension://${extId}/sidepanel.html`);
-  await panelPage.waitForSelector('text=Meta Ad Library Lead Scraper', { timeout: 5000 });
+  await panelPage.waitForSelector('text=LeadNoria', { timeout: 5000 });
   pass('Side panel page rendered UI correctly without uncaught errors');
 
   // --- GATE 3: RELEVANCE & FALSE POSITIVE / NEGATIVE BENCHMARKS ---

@@ -43,16 +43,52 @@ function createPngBuffer(width, height, r, g, b) {
 
   const ihdrChunk = makeChunk('IHDR', ihdrData);
   const rawRows = [];
+  const cx = width / 2;
+  const cy = height / 2;
+  const radius = width * 0.42;
+
   for (let y = 0; y < height; y++) {
     rawRows.push(Buffer.from([0]));
     for (let x = 0; x < width; x++) {
-      // Draw a stylish blue square with rounded borders/highlight
-      const isEdge = x === 0 || y === 0 || x === width - 1 || y === height - 1;
-      if (isEdge) {
-        rawRows.push(Buffer.from([r - 30 > 0 ? r - 30 : 0, g - 30 > 0 ? g - 30 : 0, b]));
-      } else {
-        rawRows.push(Buffer.from([r, g, b]));
+      const dx = x - cx;
+      const dy = y - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // Deep Charcoal background (#0F172A)
+      let r = 15, g = 23, b = 42;
+
+      // Outer orbit circle
+      if (Math.abs(dist - radius) <= Math.max(1, width * 0.04)) {
+        r = 51; g = 65; b = 85; // #334155
       }
+
+      const nx = x / width;
+      const ny = y / height;
+
+      // Abstract "N" geometric signal flow
+      const strokeW = Math.max(1.5, width * 0.1);
+      const isLeftCol = Math.abs(x - width * 0.32) <= strokeW / 2 && ny >= 0.24 && ny <= 0.76;
+      const isRightCol = Math.abs(x - width * 0.68) <= strokeW / 2 && ny >= 0.24 && ny <= 0.76;
+
+      const x1 = width * 0.32, y1 = height * 0.26;
+      const x2 = width * 0.68, y2 = height * 0.74;
+      const l2 = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+      let t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      const px = x1 + t * (x2 - x1);
+      const py = y1 + t * (y2 - y1);
+      const distToDiag = Math.sqrt((x - px) * (x - px) + (y - py) * (y - py));
+      const isDiag = distToDiag <= strokeW / 2;
+
+      if (isLeftCol || isRightCol || isDiag) {
+        // Muted Purple brand gradient (#7C3AED to #A78BFA)
+        const prog = (nx + ny) / 2;
+        r = Math.min(248, Math.round(124 + prog * 100));
+        g = Math.min(250, Math.round(58 + prog * 140));
+        b = Math.min(255, Math.round(237 + prog * 18));
+      }
+
+      rawRows.push(Buffer.from([r, g, b]));
     }
   }
   const idatData = zlib.deflateSync(Buffer.concat(rawRows));
@@ -61,19 +97,20 @@ function createPngBuffer(width, height, r, g, b) {
   return Buffer.concat([signature, ihdrChunk, idatChunk, iendChunk]);
 }
 
-const iconSizes = [16, 32, 48, 128];
+const iconSizes = [16, 32, 48, 128, 256];
 for (const size of iconSizes) {
   const iconPath = path.join(iconsDir, `icon-${size}.png`);
-  fs.writeFileSync(iconPath, createPngBuffer(size, size, 37, 99, 235)); // Primary brand blue #2563eb
+  fs.writeFileSync(iconPath, createPngBuffer(size, size));
 }
 console.log('[build-extension] Generated extension icons');
 
 // 2. Write manifest.json
 const manifest = {
   manifest_version: 3,
-  name: "Meta Ad Library Lead Scraper",
+  name: "LeadNoria",
+  short_name: "LeadNoria",
   version: "1.0.0",
-  description: "Local standalone Meta Ad Library scraper Chrome extension for public lead research.",
+  description: "A browser-based business lead research extension.",
   permissions: [
     "storage",
     "tabs",
@@ -92,7 +129,7 @@ const manifest = {
     default_path: "sidepanel.html"
   },
   action: {
-    default_title: "Open Lead Scraper",
+    default_title: "Open LeadNoria",
     default_popup: "popup.html"
   },
   content_scripts: [
@@ -122,7 +159,7 @@ const htmlTemplate = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meta Ad Library Lead Scraper</title>
+  <title>LeadNoria</title>
   <link rel="stylesheet" href="styles.css">
   <style>
     body {
@@ -243,9 +280,11 @@ function createZipArchive(sourceDir, zipPath) {
 
 const releaseZipPath1 = path.join(rootDir, 'extension.zip');
 const releaseZipPath2 = path.join(rootDir, 'dist/meta-ad-library-lead-scraper-v1.0.0.zip');
+const releaseZipPath3 = path.join(rootDir, 'dist/leadnoria-v1.0.0.zip');
 
 await createZipArchive(outDir, releaseZipPath1);
 await createZipArchive(outDir, releaseZipPath2);
+await createZipArchive(outDir, releaseZipPath3);
 
 console.log('[build-extension] Extension build completed successfully in ./extension');
-console.log('[build-extension] Release distribution packages ready in ./extension.zip and ./dist/meta-ad-library-lead-scraper-v1.0.0.zip');
+console.log('[build-extension] Release distribution packages ready in ./extension.zip, ./dist/leadnoria-v1.0.0.zip, and ./dist/meta-ad-library-lead-scraper-v1.0.0.zip');

@@ -62,7 +62,7 @@ export const ResearchDashboard: React.FC<ResearchDashboardProps> = ({
                 <th className="px-5 py-3">Research Name</th>
                 <th className="px-5 py-3">Query</th>
                 <th className="px-5 py-3">Location</th>
-                <th className="px-5 py-3">Requested</th>
+                <th className="px-5 py-3">Mode</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Created</th>
                 <th className="px-5 py-3 text-right">Actions</th>
@@ -73,7 +73,7 @@ export const ResearchDashboard: React.FC<ResearchDashboardProps> = ({
                 const status = (job as any).status || job.state;
                 const rawDate = (job as any).createdAt || job.startedAt || job.updatedAt;
                 const dateFormatted = rawDate ? new Date(rawDate).toLocaleDateString() : 'Recent';
-                const maxLeads = (job as any).maxResults || job.totalExpectedLimit;
+                const modeLabel = (job as any).researchMode === 'AUTO_DISCOVERY' || !(job as any).targetLeadCount ? 'Auto Discovery' : 'Custom';
                 const name = (job as any).researchName || job.query || 'Untitled Research';
 
                 return (
@@ -94,7 +94,7 @@ export const ResearchDashboard: React.FC<ResearchDashboardProps> = ({
                       {job.locationName || job.countryCode}
                     </td>
                     <td className="px-5 py-3.5 text-neutral-600 font-mono text-xs">
-                      {maxLeads}
+                      {modeLabel}
                     </td>
                     <td className="px-5 py-3.5">
                       <StatusBadge status={status} size="sm" showPrefix={false} />

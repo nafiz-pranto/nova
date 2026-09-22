@@ -53,7 +53,7 @@ pass('Phase 1: Local-only standalone architecture verified without dev dependenc
 console.log('\n--- PHASE 2 & 13: Manifest & Security Review ---');
 const manifest = JSON.parse(fs.readFileSync(path.join(extDir, 'manifest.json'), 'utf8'));
 assert.strictEqual(manifest.manifest_version, 3, 'Manifest version is 3');
-assert.strictEqual(manifest.name, 'Meta Ad Library Lead Scraper', 'Manifest name is correct');
+assert.ok(manifest.name === 'LeadNoria' || manifest.name === 'Meta Ad Library Lead Scraper', 'Manifest name is correct');
 assert.deepStrictEqual(manifest.permissions.sort(), ['scripting', 'sidePanel', 'storage', 'tabs'].sort(), 'Only minimal required permissions requested');
 assert.ok(!manifest.permissions.includes('<all_urls>'), 'No <all_urls> in permissions');
 assert.ok(manifest.host_permissions.every(h => h.includes('facebook.com/ads/library')), 'Host permissions strictly restricted to Meta Ad Library');

@@ -46,7 +46,6 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
   const [presetId, setPresetId] = useState<string>('');
   const [keywordsInput, setKeywordsInput] = useState('');
   const [countryCode, setCountryCode] = useState<string>('US');
-  const [maxResults, setMaxResults] = useState<number>(50);
   
   const [formError, setFormError] = useState<string | null>(null);
   const [executionError, setExecutionError] = useState<string | null>(null);
@@ -74,7 +73,7 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
     } else if (researchMode === 'CUSTOM' && keywordsInput.trim()) {
       keyStr = keywordsInput.split(/[,;\n]/)[0].trim();
     }
-    return `${keyStr} — ${locName} — ${maxResults} Leads`;
+    return `${keyStr} — ${locName}`;
   };
 
   const handleStartResearch = async (forcedMode?: 'LIVE' | 'CONTROLLED_FIXTURE') => {
@@ -122,10 +121,6 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
       setFormError('Select a search location.');
       return;
     }
-    if (maxResults < 1 || maxResults > 1000) {
-      setFormError('Enter a valid number of leads.');
-      return;
-    }
 
     setResearchState('RUNNING');
     abortControllerRef.current = false;
@@ -142,7 +137,7 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
       mode: researchMode,
       presetId: researchMode === 'PRESET' ? presetId : undefined,
       presetVersion: resolvedPresetVersion,
-      maxResults: maxResults,
+      maxResults: 5000,
       tenantId: 'tn_198592_default',
       idempotencyKey,
       websiteRequired: false,
@@ -283,24 +278,6 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
               />
               <p className="text-xs text-neutral-500 mt-2">
                 Location used for Meta Ad Library research.
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="max-leads-input" className="block text-sm font-bold text-neutral-900 mb-2">
-                Maximum Leads
-              </label>
-              <input
-                id="max-leads-input"
-                type="number"
-                min={1}
-                max={1000}
-                value={maxResults}
-                onChange={(e) => setMaxResults(Number(e.target.value) || 0)}
-                className="w-full sm:w-1/3 p-3 text-sm bg-neutral-50 border border-neutral-300 rounded-lg focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 font-mono transition-colors"
-              />
-              <p className="text-xs text-neutral-500 mt-2">
-                Maximum number of unique leads in the final result.
               </p>
             </div>
 
@@ -483,7 +460,7 @@ export const ResearchWizard: React.FC<ResearchWizardProps> = ({
               Research Complete
             </h1>
             <p className="mt-1 text-sm text-neutral-600">
-              <span className="font-bold text-neutral-900">{latestResult.newAdvertisers.length} UNIQUE LEADS</span> out of {maxResults} requested.
+              <span className="font-bold text-neutral-900">{latestResult.newAdvertisers.length} UNIQUE LEADS</span> discovered via Auto-Discovery research.
             </p>
           </div>
           <div className="flex items-center gap-3">

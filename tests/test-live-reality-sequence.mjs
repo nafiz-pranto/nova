@@ -41,7 +41,7 @@ async function runRealityTestSequence() {
   // Open extension sidepanel UI
   const panelPage = await browserContext.newPage();
   await panelPage.goto(`chrome-extension://${extId}/sidepanel.html`);
-  await panelPage.waitForSelector('text=Meta Ad Library Lead Scraper', { timeout: 8000 });
+  await panelPage.waitForSelector('text=LeadNoria', { timeout: 8000 });
   console.log('[REALITY TEST SETUP] Extension Sidepanel UI active and responsive');
 
   const stagedQuotas = [5, 10, 25, 50, 100, 500];
@@ -99,7 +99,7 @@ async function runRealityTestSequence() {
           );
         }
 
-        if (state.status === 'COMPLETED' || state.status === 'FAILED' || state.status === 'BLOCKED' || state.status === 'CANCELLED') {
+        if (state.status === 'COMPLETED' || state.status === 'PARTIAL' || state.status === 'FAILED' || state.status === 'BLOCKED' || state.status === 'CANCELLED' || state.status === 'RATE_LIMITED' || state.status === 'CHALLENGED') {
           completed = true;
           break;
         }
@@ -119,7 +119,7 @@ async function runRealityTestSequence() {
       stageStatus = 'BLOCKED';
     } else if (finalLeads.length >= quota) {
       stageStatus = 'PASS';
-    } else if (finalLeads.length > 0 && (stopReason === 'SOURCE_EXHAUSTED' || stopReason === 'NO_NEW_RESULTS')) {
+    } else if (finalLeads.length > 0 && (stopReason === 'SOURCE_EXHAUSTED' || stopReason === 'NO_NEW_RESULTS' || finalState?.status === 'PARTIAL')) {
       stageStatus = 'PARTIAL';
     }
 

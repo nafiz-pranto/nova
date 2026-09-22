@@ -184,13 +184,12 @@ export const ChromeMV3Studio: React.FC = () => {
 
                 <div className="space-y-2">
                   <label className="block text-[11px] font-semibold text-neutral-700">
-                    Lead Target Limit:
+                    Research Pipeline:
                   </label>
-                  <select className="w-full px-2.5 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs">
-                    <option>100 ads (Standard Research)</option>
-                    <option>250 ads (Deep Research)</option>
-                    <option>500 ads (Comprehensive)</option>
-                  </select>
+                  <div className="w-full px-2.5 py-1.5 bg-neutral-50 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-800 flex items-center justify-between">
+                    <span>Auto-Discovery Extraction</span>
+                    <span className="text-[10px] text-emerald-600 font-bold">ACTIVE</span>
+                  </div>
                 </div>
 
                 <button

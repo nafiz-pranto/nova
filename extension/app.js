@@ -14789,28 +14789,14 @@ var __iconNode11 = [
 ];
 var Search = createLucideIcon("search", __iconNode11);
 
-// node_modules/lucide-react/dist/esm/icons/sliders-vertical.js
-var __iconNode12 = [
-  ["path", { d: "M10 8h4", key: "1sr2af" }],
-  ["path", { d: "M12 21v-9", key: "17s77i" }],
-  ["path", { d: "M12 8V3", key: "13r4qs" }],
-  ["path", { d: "M17 16h4", key: "h1uq16" }],
-  ["path", { d: "M19 12V3", key: "o1uvq1" }],
-  ["path", { d: "M19 21v-5", key: "qua636" }],
-  ["path", { d: "M3 14h4", key: "bcjad9" }],
-  ["path", { d: "M5 10V3", key: "cb8scm" }],
-  ["path", { d: "M5 21v-7", key: "1w1uti" }]
-];
-var SlidersVertical = createLucideIcon("sliders-vertical", __iconNode12);
-
 // node_modules/lucide-react/dist/esm/icons/square.js
-var __iconNode13 = [
+var __iconNode12 = [
   ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }]
 ];
-var Square = createLucideIcon("square", __iconNode13);
+var Square = createLucideIcon("square", __iconNode12);
 
 // node_modules/lucide-react/dist/esm/icons/tag.js
-var __iconNode14 = [
+var __iconNode13 = [
   [
     "path",
     {
@@ -14820,20 +14806,20 @@ var __iconNode14 = [
   ],
   ["circle", { cx: "7.5", cy: "7.5", r: ".5", fill: "currentColor", key: "kqv944" }]
 ];
-var Tag = createLucideIcon("tag", __iconNode14);
+var Tag = createLucideIcon("tag", __iconNode13);
 
 // node_modules/lucide-react/dist/esm/icons/trash-2.js
-var __iconNode15 = [
+var __iconNode14 = [
   ["path", { d: "M10 11v6", key: "nco0om" }],
   ["path", { d: "M14 11v6", key: "outv1u" }],
   ["path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6", key: "miytrc" }],
   ["path", { d: "M3 6h18", key: "d0wm0j" }],
   ["path", { d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2", key: "e791ji" }]
 ];
-var Trash2 = createLucideIcon("trash-2", __iconNode15);
+var Trash2 = createLucideIcon("trash-2", __iconNode14);
 
 // node_modules/lucide-react/dist/esm/icons/triangle-alert.js
-var __iconNode16 = [
+var __iconNode15 = [
   [
     "path",
     {
@@ -14844,7 +14830,7 @@ var __iconNode16 = [
   ["path", { d: "M12 9v4", key: "juzpu7" }],
   ["path", { d: "M12 17h.01", key: "p32p05" }]
 ];
-var TriangleAlert = createLucideIcon("triangle-alert", __iconNode16);
+var TriangleAlert = createLucideIcon("triangle-alert", __iconNode15);
 
 // src/data/presetCatalogue.ts
 var RESEARCH_PRESETS = [
@@ -16801,8 +16787,18 @@ function sanitizeCsvField(val) {
   return `"${str}"`;
 }
 function exportLeadsToCsv(leads, run) {
-  const metaHeader = run ? `# Research Run: ${run.researchName} | Mode: ${run.mode} | Requested Quota: ${run.targetLeadCount} | Final Relevant Leads: ${run.leads.length} | Status: ${run.status} | Stop Reason: ${run.stopReason || "N/A"} | Engine Version: ${run.engineVersion || "strict-v2"}\r
-` : "";
+  let metaHeader = "";
+  if (run) {
+    const isAutoDiscovery = run.researchMode === "AUTO_DISCOVERY" || run.targetLeadCount === void 0;
+    const finalCount = run.leads ? run.leads.length : leads.length;
+    if (isAutoDiscovery) {
+      metaHeader = `# Research Run: ${run.researchName} | Mode: Auto Discovery (${run.mode}) | Source: Meta Ad Library | Keywords: ${(run.keywords || []).join("; ")} | Location: ${run.locationName} | Final Relevant Leads: ${finalCount} | Status: ${run.status} | Stop Reason: ${run.stopReason || "N/A"} | Engine Version: ${run.engineVersion || "strict-v2"}\r
+`;
+    } else {
+      metaHeader = `# Research Run: ${run.researchName} | Mode: ${run.mode} | Requested Quota: ${run.targetLeadCount} | Final Relevant Leads: ${finalCount} | Status: ${run.status} | Stop Reason: ${run.stopReason || "N/A"} | Engine Version: ${run.engineVersion || "strict-v2"}\r
+`;
+    }
+  }
   const headers = [
     "Lead Name",
     "Facebook Page Name",
@@ -16837,10 +16833,10 @@ function exportLeadsToCsv(leads, run) {
     sanitizeCsvField(l.destinationUrl || ""),
     sanitizeCsvField(l.websiteState),
     sanitizeCsvField(l.activeAdCount),
-    sanitizeCsvField(l.matchedKeywords.join("; ")),
-    sanitizeCsvField(l.locationCode),
-    sanitizeCsvField(l.locationName),
-    sanitizeCsvField(l.adLibraryIds.join("; ")),
+    sanitizeCsvField((l.matchedKeywords || []).join("; ")),
+    sanitizeCsvField(l.locationCode || ""),
+    sanitizeCsvField(l.locationName || ""),
+    sanitizeCsvField((l.adLibraryIds || []).join("; ")),
     sanitizeCsvField(l.adLibraryUrl || ""),
     sanitizeCsvField(l.relevanceDecision || "RELEVANT"),
     sanitizeCsvField(l.relevanceScore !== void 0 ? `${(l.relevanceScore * 100).toFixed(0)}%` : "100%"),
@@ -16864,13 +16860,14 @@ var ExtensionApp = () => {
   const [presetId, setPresetId] = (0, import_react3.useState)(RESEARCH_PRESETS[0]?.preset_id || "");
   const [keywordsInput, setKeywordsInput] = (0, import_react3.useState)("Furniture, Home Decor");
   const [countryCode, setCountryCode] = (0, import_react3.useState)("BD");
-  const [maxResults, setMaxResults] = (0, import_react3.useState)(10);
   const [customSearchName, setCustomSearchName] = (0, import_react3.useState)("");
   const [activeRun, setActiveRun] = (0, import_react3.useState)(null);
   const [historyRuns, setHistoryRuns] = (0, import_react3.useState)([]);
   const [selectedLead, setSelectedLead] = (0, import_react3.useState)(null);
   const [statusMessage, setStatusMessage] = (0, import_react3.useState)("");
   const [isSubmitting, setIsSubmitting] = (0, import_react3.useState)(false);
+  const [currentPage, setCurrentPage] = (0, import_react3.useState)(1);
+  const LEADS_PER_PAGE = 50;
   (0, import_react3.useEffect)(() => {
     loadStateFromStorage();
     const messageListener = (msg) => {
@@ -16944,12 +16941,12 @@ var ExtensionApp = () => {
     const locationName = loc ? loc.displayName : countryCode;
     const payload = {
       mode: researchMode,
+      researchMode: "AUTO_DISCOVERY",
       presetId: researchMode === "PRESET" ? presetId : void 0,
       presetName,
       keywords: parsedKeywords,
       countryCode,
       locationName,
-      maxResults: Number(maxResults) || 10,
       researchName: customSearchName.trim() || `${researchMode === "PRESET" ? presetName : parsedKeywords[0]} in ${locationName}`
     };
     if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
@@ -17001,14 +16998,60 @@ var ExtensionApp = () => {
   };
   const handleExportCsv = (leads, run) => {
     if (!leads || leads.length === 0) return;
+    if (run?.runId && typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({
+        type: "GET_ALL_LEADS_FOR_EXPORT",
+        payload: { runId: run.runId }
+      }, (res) => {
+        const exportLeads = res && res.success && Array.isArray(res.leads) && res.leads.length > 0 ? res.leads : leads;
+        const csvData2 = exportLeadsToCsv(exportLeads, run);
+        const fileName2 = `leadnoria_leads_${run.runId}.csv`;
+        downloadFile(csvData2, fileName2, "text/csv;charset=utf-8;");
+      });
+      return;
+    }
     const csvData = exportLeadsToCsv(leads, run);
-    const fileName = `meta_ad_library_leads_${run ? run.runId : Date.now()}.csv`;
+    const fileName = `leadnoria_leads_${run ? run.runId : Date.now()}.csv`;
     downloadFile(csvData, fileName, "text/csv;charset=utf-8;");
   };
   const handleExportJson = (run) => {
+    if (run?.runId && typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({
+        type: "GET_ALL_LEADS_FOR_EXPORT",
+        payload: { runId: run.runId }
+      }, (res) => {
+        const fullRun = { ...run };
+        if (res && res.success && Array.isArray(res.leads) && res.leads.length > 0) {
+          fullRun.leads = res.leads;
+        }
+        const jsonData2 = JSON.stringify(fullRun, null, 2);
+        const fileName2 = `leadnoria_run_${run.runId}.json`;
+        downloadFile(jsonData2, fileName2, "application/json;charset=utf-8;");
+      });
+      return;
+    }
     const jsonData = JSON.stringify(run, null, 2);
-    const fileName = `meta_ad_library_run_${run.runId}.json`;
+    const fileName = `leadnoria_run_${run.runId}.json`;
     downloadFile(jsonData, fileName, "application/json;charset=utf-8;");
+  };
+  const handleResumeResearch = () => {
+    if (!activeRun) return;
+    setIsSubmitting(true);
+    setStatusMessage("Resuming research from frontier checkpoint...");
+    if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({
+        type: "RESUME_RESEARCH",
+        payload: { runId: activeRun.runId }
+      }, (res) => {
+        if (res && res.run) {
+          setActiveRun(res.run);
+          setActiveTab("RESULTS");
+        } else if (res && !res.success) {
+          setStatusMessage(`Failed to resume research: ${res.error}`);
+          setIsSubmitting(false);
+        }
+      });
+    }
   };
   const isRunning = activeRun && (activeRun.status === "STARTING" || activeRun.status === "NAVIGATING" || activeRun.status === "COLLECTING" || activeRun.status === "NORMALIZING");
   const isStale = activeRun && activeRun.status === "RECOVERY_REQUIRED";
@@ -17049,8 +17092,8 @@ var ExtensionApp = () => {
   const formatStopReason = (reason) => {
     if (!reason) return "";
     switch (reason) {
-      case "TARGET_REACHED":
-        return "Target Quota Reached";
+      case "SAFETY_LIMIT_REACHED":
+        return "System Safety Limit Reached (5,000 Leads)";
       case "SOURCE_EXHAUSTED":
       case "SOURCE_EXHAUSTED_VERIFIED":
         return "Search Results Exhausted";
@@ -17096,15 +17139,36 @@ var ExtensionApp = () => {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex flex-col h-screen w-full bg-slate-900 text-slate-100 text-xs antialiased font-sans select-none overflow-hidden", children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { className: "flex items-center justify-between px-3 py-2.5 bg-slate-950 border-b border-slate-800", children: [
       /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-2", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "w-5 h-5 rounded bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm", children: "N" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h1", { className: "text-xs font-semibold tracking-tight text-white flex items-center gap-1.5", children: [
-          "Meta Ad Library Lead Scraper",
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "px-1.5 py-0.2 text-[9px] font-mono bg-blue-900/60 text-blue-300 border border-blue-700/50 rounded", children: "MV3 Local" })
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "w-5 h-5 rounded bg-slate-900 border border-slate-800 flex items-center justify-center shadow-sm overflow-hidden flex-shrink-0", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", { width: "18", height: "18", viewBox: "0 0 100 100", fill: "none", xmlns: "http://www.w3.org/2000/svg", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", { width: "100", height: "100", rx: "22", fill: "#0F172A" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "50", cy: "50", r: "38", stroke: "#334155", strokeWidth: "2.5", strokeDasharray: "4 4", opacity: "0.7" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "path",
+            {
+              d: "M 30 72 L 30 28 C 30 25 34 24 36 27 L 64 73 C 66 76 70 75 70 72 L 70 28",
+              stroke: "url(#hdr-noria-flow)",
+              strokeWidth: "8",
+              strokeLinecap: "round",
+              strokeLinejoin: "round"
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "30", cy: "72", r: "5", fill: "#A78BFA" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "50", cy: "50", r: "4", fill: "#F8FAFC" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", { cx: "70", cy: "28", r: "5", fill: "#8B5CF6" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("defs", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("linearGradient", { id: "hdr-noria-flow", x1: "28", y1: "72", x2: "72", y2: "28", gradientUnits: "userSpaceOnUse", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("stop", { offset: "0%", stopColor: "#7C3AED" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("stop", { offset: "50%", stopColor: "#A78BFA" }),
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("stop", { offset: "100%", stopColor: "#F8FAFC" })
+          ] }) })
+        ] }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h1", { className: "text-xs font-semibold tracking-tight text-white flex items-center gap-1.5", "aria-label": "LeadNoria", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "font-bold text-white tracking-tight", children: "LeadNoria" }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "px-1.5 py-0.2 text-[9px] font-mono bg-purple-950/80 text-purple-300 border border-purple-700/50 rounded", children: "Lead Research" })
         ] }) })
       ] }),
       isRunning && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-1.5 px-2 py-0.5 bg-emerald-950/80 border border-emerald-700/50 rounded text-emerald-300 text-[10px] animate-pulse", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "w-1.5 h-1.5 rounded-full bg-emerald-400" }),
-        "Scraping Active"
+        "Research Active"
       ] })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", { className: "flex items-center px-2 py-1 bg-slate-900/90 border-b border-slate-800 text-[11px] gap-1", children: [
@@ -17235,44 +17299,28 @@ var ExtensionApp = () => {
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "grid grid-cols-2 gap-2", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-2.5 bg-slate-800/50 border border-slate-700/60 rounded-lg space-y-1", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { className: "text-[11px] font-semibold text-slate-300 flex items-center gap-1", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-2.5 bg-slate-800/50 border border-slate-700/60 rounded-lg space-y-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { className: "text-[11px] font-semibold text-slate-300 flex items-center justify-between", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "flex items-center gap-1", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Globe, { className: "w-3 h-3 text-blue-400" }),
               "Search Location"
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-              "select",
-              {
-                value: countryCode,
-                onChange: (e) => setCountryCode(e.target.value),
-                className: "w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 text-xs focus:outline-none focus:border-blue-500",
-                children: META_AD_LIBRARY_LOCATIONS.map((loc) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("option", { value: loc.locationCode, children: [
-                  loc.displayName,
-                  " (",
-                  loc.locationCode,
-                  ")"
-                ] }, loc.locationCode))
-              }
-            )
+            /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[10px] text-slate-400 font-normal", children: "Auto-Discovery" })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-2.5 bg-slate-800/50 border border-slate-700/60 rounded-lg space-y-1", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { className: "text-[11px] font-semibold text-slate-300 flex items-center gap-1", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SlidersVertical, { className: "w-3 h-3 text-blue-400" }),
-              "Maximum Leads"
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-              "input",
-              {
-                type: "number",
-                min: 1,
-                max: 500,
-                value: maxResults,
-                onChange: (e) => setMaxResults(Math.max(1, parseInt(e.target.value) || 1)),
-                className: "w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 text-xs focus:outline-none focus:border-blue-500"
-              }
-            )
-          ] })
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            "select",
+            {
+              value: countryCode,
+              onChange: (e) => setCountryCode(e.target.value),
+              className: "w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 text-xs focus:outline-none focus:border-blue-500",
+              children: META_AD_LIBRARY_LOCATIONS.map((loc) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("option", { value: loc.locationCode, children: [
+                loc.displayName,
+                " (",
+                loc.locationCode,
+                ")"
+              ] }, loc.locationCode))
+            }
+          )
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "pt-2", children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
           "button",
@@ -17313,22 +17361,15 @@ var ExtensionApp = () => {
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "grid grid-cols-3 gap-1.5 pt-1 text-center", children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-1.5 bg-slate-900 rounded border border-slate-800", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-[9px] text-slate-400", children: "Unique Leads" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "text-sm font-bold text-emerald-400", children: [
-                activeRun.leads.length,
-                " ",
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-[10px] text-slate-500 font-normal", children: [
-                  "/ ",
-                  activeRun.maxResults
-                ] })
-              ] })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-sm font-bold text-emerald-400", children: activeRun.counters?.finalUniqueRelevantLeads ?? activeRun.counters?.finalUniqueLeads ?? activeRun.leads.length })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-1.5 bg-slate-900 rounded border border-slate-800", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-[9px] text-slate-400", children: "Ads Inspected" }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-sm font-bold text-blue-400", children: activeRun.totalAdsInspected })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-1.5 bg-slate-900 rounded border border-slate-800", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-[9px] text-slate-400", children: "Target Quota" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-sm font-bold text-slate-300", children: activeRun.maxResults })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-[9px] text-slate-400", children: "Discovery Mode" }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-sm font-bold text-purple-300", children: "Auto" })
             ] })
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center justify-between pt-1", children: [
@@ -17343,17 +17384,32 @@ var ExtensionApp = () => {
                   "Stop Research"
                 ]
               }
-            ) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-[10px] text-slate-400", children: activeRun.stopReason ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-slate-300 font-medium", children: [
-              "(",
-              formatStopReason(activeRun.stopReason),
-              ")"
-            ] }) : activeRun.leads.length >= activeRun.maxResults ? "\u2713 Target quota reached" : "Research stopped" }),
+            ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+              ["PARTIAL", "BROWSER_TAB_CLOSED", "BROWSER_INTERRUPTED", "RECOVERY_REQUIRED"].includes(activeRun.status) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+                "button",
+                {
+                  type: "button",
+                  onClick: handleResumeResearch,
+                  className: "px-2 py-1 bg-purple-900/70 hover:bg-purple-800 border border-purple-700 text-purple-200 rounded text-[10px] font-medium flex items-center gap-1",
+                  title: "Resume research from last checkpoint",
+                  children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RefreshCw, { className: "w-3 h-3" }),
+                    "Resume"
+                  ]
+                }
+              ),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-[10px] text-slate-400", children: activeRun.stopReason ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-slate-300 font-medium", children: [
+                "(",
+                formatStopReason(activeRun.stopReason),
+                ")"
+              ] }) : "Research completed" })
+            ] }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-1", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
                 "button",
                 {
                   type: "button",
-                  disabled: activeRun.leads.length === 0,
+                  disabled: activeRun.leads.length === 0 && !(activeRun.counters?.finalUniqueRelevantLeads || activeRun.counters?.finalUniqueLeads),
                   onClick: () => handleExportCsv(activeRun.leads, activeRun),
                   className: "px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 rounded text-[10px] flex items-center gap-1",
                   title: "Export RFC-4180 CSV with Formula Injection Protection",
@@ -17383,76 +17439,120 @@ var ExtensionApp = () => {
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center justify-between text-[11px] font-semibold text-slate-300 px-1", children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
               "Relevant Leads (",
-              activeRun.leads.length,
-              ")"
+              activeRun.counters?.finalUniqueRelevantLeads ?? activeRun.counters?.finalUniqueLeads ?? activeRun.leads.length,
+              ")",
+              (activeRun.counters?.finalUniqueRelevantLeads ?? activeRun.counters?.finalUniqueLeads ?? activeRun.leads.length) > activeRun.leads.length && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-[9px] text-slate-400 font-normal ml-1", children: [
+                "(showing top ",
+                activeRun.leads.length,
+                " preview)"
+              ] })
             ] }),
             /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[9px] text-slate-400 font-normal", children: activeRun.rejectedLeadsCount ? `${activeRun.rejectedLeadsCount} irrelevant excluded` : "Click lead to inspect" })
           ] }),
-          activeRun.leads.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "p-4 bg-slate-800/30 border border-dashed border-slate-700 rounded-lg text-center text-slate-500 text-[11px]", children: isRunning ? "Actively extracting ad cards from Meta Ad Library..." : "No leads found yet. Start research above." }) : activeRun.leads.map((lead) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-            "div",
-            {
-              onClick: () => setSelectedLead(lead),
-              className: `p-2 bg-slate-800/60 hover:bg-slate-800 border rounded cursor-pointer transition-all ${selectedLead?.id === lead.id ? "border-blue-500 bg-slate-800" : "border-slate-700/60"}`,
-              children: [
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-start justify-between gap-1", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "font-semibold text-slate-100 text-xs truncate max-w-[220px]", children: lead.name }),
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-1", children: [
-                    lead.relevanceDecision && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "px-1.5 py-0.2 bg-emerald-950 border border-emerald-800 text-emerald-300 rounded text-[9px] font-mono whitespace-nowrap", children: [
-                      lead.relevanceDecision,
-                      " (",
-                      Math.round((lead.relevanceScore || 1) * 100),
-                      "%)"
+          activeRun.leads.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "p-4 bg-slate-800/30 border border-dashed border-slate-700 rounded-lg text-center text-slate-500 text-[11px]", children: isRunning ? "Actively extracting ad cards from Meta Ad Library..." : "No leads found yet. Start research above." }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+            activeRun.leads.slice((currentPage - 1) * LEADS_PER_PAGE, currentPage * LEADS_PER_PAGE).map((lead) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+              "div",
+              {
+                onClick: () => setSelectedLead(lead),
+                className: `p-2 bg-slate-800/60 hover:bg-slate-800 border rounded cursor-pointer transition-all ${selectedLead?.id === lead.id ? "border-blue-500 bg-slate-800" : "border-slate-700/60"}`,
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-start justify-between gap-1", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "font-semibold text-slate-100 text-xs truncate max-w-[220px]", children: lead.name }),
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-1", children: [
+                      lead.relevanceDecision && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "px-1.5 py-0.2 bg-emerald-950 border border-emerald-800 text-emerald-300 rounded text-[9px] font-mono whitespace-nowrap", children: [
+                        lead.relevanceDecision,
+                        " (",
+                        Math.round((lead.relevanceScore || 1) * 100),
+                        "%)"
+                      ] }),
+                      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "px-1.5 py-0.2 bg-blue-950 border border-blue-800 text-blue-300 rounded text-[9px] font-mono whitespace-nowrap", children: [
+                        lead.activeAdCount,
+                        " ",
+                        lead.activeAdCount === 1 ? "ad" : "ads"
+                      ] })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-2 mt-1.5 text-[10px]", children: [
+                    lead.facebookPageUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+                      "a",
+                      {
+                        href: lead.facebookPageUrl,
+                        target: "_blank",
+                        rel: "noreferrer",
+                        onClick: (e) => e.stopPropagation(),
+                        className: "text-blue-400 hover:text-blue-300 flex items-center gap-0.5 truncate max-w-[140px]",
+                        children: [
+                          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, { className: "w-2.5 h-2.5 text-emerald-400 flex-shrink-0" }),
+                          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "truncate", children: "FB Page" }),
+                          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExternalLink, { className: "w-2.5 h-2.5" })
+                        ]
+                      }
+                    ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-slate-500 flex items-center gap-0.5", children: [
+                      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600" }),
+                      "No Page"
                     ] }),
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "px-1.5 py-0.2 bg-blue-950 border border-blue-800 text-blue-300 rounded text-[9px] font-mono whitespace-nowrap", children: [
-                      lead.activeAdCount,
-                      " ",
-                      lead.activeAdCount === 1 ? "ad" : "ads"
+                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-slate-600", children: "\u2022" }),
+                    lead.destinationUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
+                      "a",
+                      {
+                        href: lead.destinationUrl,
+                        target: "_blank",
+                        rel: "noreferrer",
+                        onClick: (e) => e.stopPropagation(),
+                        className: "text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5 truncate max-w-[140px]",
+                        children: [
+                          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Globe, { className: "w-2.5 h-2.5 text-emerald-400 flex-shrink-0" }),
+                          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "truncate", children: lead.destinationDomain || "Website" }),
+                          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExternalLink, { className: "w-2.5 h-2.5" })
+                        ]
+                      }
+                    ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-slate-500 flex items-center gap-0.5", children: [
+                      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600" }),
+                      "No Website"
                     ] })
                   ] })
+                ]
+              },
+              lead.id
+            )),
+            activeRun.leads.length > LEADS_PER_PAGE && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center justify-between pt-2 px-1 text-[11px] text-slate-400", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+                "Showing ",
+                (currentPage - 1) * LEADS_PER_PAGE + 1,
+                "\u2013",
+                Math.min(currentPage * LEADS_PER_PAGE, activeRun.leads.length),
+                " of ",
+                activeRun.leads.length
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-1", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                  "button",
+                  {
+                    type: "button",
+                    disabled: currentPage === 1,
+                    onClick: () => setCurrentPage((p) => Math.max(1, p - 1)),
+                    className: "px-2 py-0.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 border border-slate-700 rounded text-slate-200",
+                    children: "Prev"
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "px-1 text-slate-300 font-medium", children: [
+                  currentPage,
+                  " / ",
+                  Math.ceil(activeRun.leads.length / LEADS_PER_PAGE)
                 ] }),
-                /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-2 mt-1.5 text-[10px]", children: [
-                  lead.facebookPageUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-                    "a",
-                    {
-                      href: lead.facebookPageUrl,
-                      target: "_blank",
-                      rel: "noreferrer",
-                      onClick: (e) => e.stopPropagation(),
-                      className: "text-blue-400 hover:text-blue-300 flex items-center gap-0.5 truncate max-w-[140px]",
-                      children: [
-                        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, { className: "w-2.5 h-2.5 text-emerald-400 flex-shrink-0" }),
-                        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "truncate", children: "FB Page" }),
-                        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExternalLink, { className: "w-2.5 h-2.5" })
-                      ]
-                    }
-                  ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-slate-500 flex items-center gap-0.5", children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600" }),
-                    "No Page"
-                  ] }),
-                  /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-slate-600", children: "\u2022" }),
-                  lead.destinationUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-                    "a",
-                    {
-                      href: lead.destinationUrl,
-                      target: "_blank",
-                      rel: "noreferrer",
-                      onClick: (e) => e.stopPropagation(),
-                      className: "text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5 truncate max-w-[140px]",
-                      children: [
-                        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Globe, { className: "w-2.5 h-2.5 text-emerald-400 flex-shrink-0" }),
-                        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "truncate", children: lead.destinationDomain || "Website" }),
-                        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExternalLink, { className: "w-2.5 h-2.5" })
-                      ]
-                    }
-                  ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-slate-500 flex items-center gap-0.5", children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600" }),
-                    "No Website"
-                  ] })
-                ] })
-              ]
-            },
-            lead.id
-          ))
+                /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+                  "button",
+                  {
+                    type: "button",
+                    disabled: currentPage >= Math.ceil(activeRun.leads.length / LEADS_PER_PAGE),
+                    onClick: () => setCurrentPage((p) => Math.min(Math.ceil(activeRun.leads.length / LEADS_PER_PAGE), p + 1)),
+                    className: "px-2 py-0.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 border border-slate-700 rounded text-slate-200",
+                    children: "Next"
+                  }
+                )
+              ] })
+            ] })
+          ] })
         ] }),
         selectedLead && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-2.5 bg-slate-950 border border-blue-700/60 rounded-lg space-y-2 mt-2", children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center justify-between border-b border-slate-800 pb-1.5", children: [
@@ -17568,13 +17668,14 @@ var ExtensionApp = () => {
         ] })
       ] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "p-6 bg-slate-800/30 border border-dashed border-slate-700 rounded-lg text-center space-y-2", children: [
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Search, { className: "w-6 h-6 text-slate-500 mx-auto" }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-slate-400 text-xs", children: "No active research session." }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-slate-300 font-medium text-xs", children: "Discover your first set of business leads." }),
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "text-slate-500 text-[10px]", children: "LeadNoria \u2022 Discover. Verify. Connect." }),
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
           "button",
           {
             type: "button",
             onClick: () => setActiveTab("RESEARCH"),
-            className: "px-3 py-1 bg-blue-600 text-white rounded text-[11px]",
+            className: "px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-[11px] mt-1 transition-colors",
             children: "Configure Research"
           }
         )
@@ -17613,9 +17714,7 @@ var ExtensionApp = () => {
                   run.locationName,
                   " \u2022 ",
                   run.leads.length,
-                  " of ",
-                  run.targetLeadCount || run.maxResults,
-                  " leads"
+                  " unique leads"
                 ] }),
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: new Date(run.startedAt).toLocaleDateString() })
               ] }),
@@ -17735,7 +17834,6 @@ lucide-react/dist/esm/icons/layers.js:
 lucide-react/dist/esm/icons/play.js:
 lucide-react/dist/esm/icons/refresh-cw.js:
 lucide-react/dist/esm/icons/search.js:
-lucide-react/dist/esm/icons/sliders-vertical.js:
 lucide-react/dist/esm/icons/square.js:
 lucide-react/dist/esm/icons/tag.js:
 lucide-react/dist/esm/icons/trash-2.js:

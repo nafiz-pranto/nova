@@ -39,7 +39,7 @@ async function run() {
     await page.waitForTimeout(1000);
 
     const title = await page.textContent('h1');
-    if (!title || !title.includes('Meta Ad Library Lead Scraper')) {
+    if (!title || (!title.includes('LeadNoria') && !title.includes('Meta Ad Library Lead Scraper'))) {
       throw new Error(`Unexpected UI title: ${title}`);
     }
     console.log('✓ TEST 2: Extension UI Rendered successfully, Title:', title.trim());

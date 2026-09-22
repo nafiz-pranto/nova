@@ -1,3 +1,6 @@
+// src/extension/types.ts
+var MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH = 5e3;
+
 // src/data/presetCatalogue.ts
 var RESEARCH_PRESETS = [
   // ==========================================
@@ -1846,146 +1849,522 @@ var LeadRelevanceEngine = class _LeadRelevanceEngine {
   }
 };
 
-// src/extension/metaAdapter.ts
-function aggregateCandidatesToLeads(candidates, locationCode, locationName, maxResults, existingLeads = [], intent) {
-  const candidateGroups = /* @__PURE__ */ new Map();
-  let totalAdsCount = 0;
-  const reasonCodes = {};
+// src/extension/bulkStore.ts
+var DB_NAME = "leadnoria-research";
+var DB_VERSION = 1;
+var MemoryStoreFallback = class {
+  constructor() {
+    this.runs = /* @__PURE__ */ new Map();
+    this.ads = /* @__PURE__ */ new Map();
+    // key: `${runId}_${libraryId}`
+    this.entities = /* @__PURE__ */ new Map();
+    // key: `${runId}_${canonicalKey}`
+    this.evidence = /* @__PURE__ */ new Map();
+    // key: `${runId}_${canonicalKey}`
+    this.checkpoints = /* @__PURE__ */ new Map();
+    // key: `${runId}_${batchIndex}`
+    this.dedupAds = /* @__PURE__ */ new Map();
+    // runId -> Set<libraryId>
+    this.dedupEntities = /* @__PURE__ */ new Map();
+  }
+  // runId -> Set<canonicalKey>
+  async saveRun(run) {
+    this.runs.set(run.runId, JSON.parse(JSON.stringify(run)));
+  }
+  async getRun(runId) {
+    const r = this.runs.get(runId);
+    return r ? JSON.parse(JSON.stringify(r)) : null;
+  }
+  async saveBatch(runId, payload) {
+    if (!this.dedupAds.has(runId)) this.dedupAds.set(runId, /* @__PURE__ */ new Set());
+    if (!this.dedupEntities.has(runId)) this.dedupEntities.set(runId, /* @__PURE__ */ new Set());
+    const adSet = this.dedupAds.get(runId);
+    const entSet = this.dedupEntities.get(runId);
+    for (const ad of payload.ads) {
+      this.ads.set(`${runId}_${ad.libraryId}`, { ...ad, runId });
+      adSet.add(ad.libraryId);
+    }
+    for (const ent of payload.entities) {
+      const canonicalKey = ent.canonicalName ? ent.canonicalName.toLowerCase() : ent.name.toLowerCase();
+      this.entities.set(`${runId}_${canonicalKey}`, { ...ent, runId, canonicalKey });
+      entSet.add(canonicalKey);
+    }
+    if (payload.evidence) {
+      for (const ev of payload.evidence) {
+        this.evidence.set(`${runId}_${ev.canonicalKey}`, ev.evidence);
+      }
+    }
+    this.checkpoints.set(`${runId}_${payload.batchIndex}`, payload.checkpoint);
+  }
+  async getAllRelevantLeads(runId) {
+    const results = [];
+    for (const [key, ent] of this.entities.entries()) {
+      if (key.startsWith(`${runId}_`)) {
+        if (!ent.relevanceDecision || ent.relevanceDecision === "RELEVANT") {
+          results.push(JSON.parse(JSON.stringify(ent)));
+        }
+      }
+    }
+    return results;
+  }
+  async getEntity(runId, canonicalKey) {
+    const ent = this.entities.get(`${runId}_${canonicalKey.toLowerCase()}`);
+    return ent ? JSON.parse(JSON.stringify(ent)) : null;
+  }
+  async getSeenAdIds(runId) {
+    return new Set(this.dedupAds.get(runId) || []);
+  }
+  async getSeenEntityKeys(runId) {
+    return new Set(this.dedupEntities.get(runId) || []);
+  }
+  async getLatestCheckpoint(runId) {
+    let latestIndex = -1;
+    let latestCp = null;
+    for (const [key, cp] of this.checkpoints.entries()) {
+      if (key.startsWith(`${runId}_`)) {
+        if (cp.batchIndex > latestIndex) {
+          latestIndex = cp.batchIndex;
+          latestCp = cp;
+        }
+      }
+    }
+    return latestCp ? JSON.parse(JSON.stringify(latestCp)) : null;
+  }
+  async getStorageStats(runId) {
+    let totalAds = 0;
+    let totalEntities = 0;
+    let totalRelevant = 0;
+    let totalCheckpoints = 0;
+    let bytes = 0;
+    for (const [k, v] of this.ads.entries()) {
+      if (k.startsWith(`${runId}_`)) {
+        totalAds++;
+        bytes += JSON.stringify(v).length;
+      }
+    }
+    for (const [k, v] of this.entities.entries()) {
+      if (k.startsWith(`${runId}_`)) {
+        totalEntities++;
+        if (!v.relevanceDecision || v.relevanceDecision === "RELEVANT") totalRelevant++;
+        bytes += JSON.stringify(v).length;
+      }
+    }
+    for (const [k, v] of this.checkpoints.entries()) {
+      if (k.startsWith(`${runId}_`)) {
+        totalCheckpoints++;
+        bytes += JSON.stringify(v).length;
+      }
+    }
+    return {
+      runId,
+      totalAds,
+      totalEntities,
+      totalRelevantLeads: totalRelevant,
+      totalCheckpoints,
+      estimatedBytes: bytes
+    };
+  }
+  async clearRun(runId) {
+    this.runs.delete(runId);
+    this.dedupAds.delete(runId);
+    this.dedupEntities.delete(runId);
+    for (const k of Array.from(this.ads.keys())) {
+      if (k.startsWith(`${runId}_`)) this.ads.delete(k);
+    }
+    for (const k of Array.from(this.entities.keys())) {
+      if (k.startsWith(`${runId}_`)) this.entities.delete(k);
+    }
+    for (const k of Array.from(this.evidence.keys())) {
+      if (k.startsWith(`${runId}_`)) this.evidence.delete(k);
+    }
+    for (const k of Array.from(this.checkpoints.keys())) {
+      if (k.startsWith(`${runId}_`)) this.checkpoints.delete(k);
+    }
+  }
+};
+var memoryFallback = new MemoryStoreFallback();
+function hasIndexedDB() {
+  return typeof indexedDB !== "undefined" && indexedDB !== null;
+}
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (!hasIndexedDB()) {
+      return reject(new Error("IndexedDB not available"));
+    }
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains("runs")) {
+        db.createObjectStore("runs", { keyPath: "runId" });
+      }
+      if (!db.objectStoreNames.contains("ads")) {
+        const adStore = db.createObjectStore("ads", { keyPath: ["runId", "libraryId"] });
+        adStore.createIndex("by_run", "runId", { unique: false });
+      }
+      if (!db.objectStoreNames.contains("entities")) {
+        const entStore = db.createObjectStore("entities", { keyPath: ["runId", "canonicalKey"] });
+        entStore.createIndex("by_run", "runId", { unique: false });
+        entStore.createIndex("by_run_decision", ["runId", "relevanceDecision"], { unique: false });
+      }
+      if (!db.objectStoreNames.contains("evidence")) {
+        const evStore = db.createObjectStore("evidence", { keyPath: ["runId", "canonicalKey"] });
+        evStore.createIndex("by_run", "runId", { unique: false });
+      }
+      if (!db.objectStoreNames.contains("checkpoints")) {
+        const cpStore = db.createObjectStore("checkpoints", { keyPath: ["runId", "batchIndex"] });
+        cpStore.createIndex("by_run", "runId", { unique: false });
+      }
+      if (!db.objectStoreNames.contains("dedupIndex")) {
+        const dedupStore = db.createObjectStore("dedupIndex", { keyPath: ["runId", "idType", "idVal"] });
+        dedupStore.createIndex("by_run", "runId", { unique: false });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+async function initBulkStore() {
+  if (!hasIndexedDB()) {
+    return false;
+  }
+  try {
+    const db = await openDB();
+    db.close();
+    return true;
+  } catch (err) {
+    console.warn("[bulkStore] IndexedDB init failed, using memory fallback:", err);
+    return false;
+  }
+}
+async function saveRunRecord(run) {
+  if (!hasIndexedDB()) {
+    return memoryFallback.saveRun(run);
+  }
+  try {
+    const db = await openDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("runs", "readwrite");
+      tx.objectStore("runs").put(run);
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onerror = () => {
+        db.close();
+        reject(tx.error);
+      };
+    });
+  } catch {
+    return memoryFallback.saveRun(run);
+  }
+}
+async function saveBatch(runId, payload) {
+  if (!hasIndexedDB()) {
+    return memoryFallback.saveBatch(runId, payload);
+  }
+  try {
+    const db = await openDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(["ads", "entities", "evidence", "checkpoints", "dedupIndex"], "readwrite");
+      const adStore = tx.objectStore("ads");
+      const entStore = tx.objectStore("entities");
+      const evStore = tx.objectStore("evidence");
+      const cpStore = tx.objectStore("checkpoints");
+      const dedupStore = tx.objectStore("dedupIndex");
+      for (const ad of payload.ads) {
+        adStore.put({ ...ad, runId });
+        dedupStore.put({ runId, idType: "AD_ID", idVal: ad.libraryId });
+      }
+      for (const ent of payload.entities) {
+        const canonicalKey = ent.canonicalName ? ent.canonicalName.toLowerCase() : ent.name.toLowerCase();
+        entStore.put({ ...ent, runId, canonicalKey });
+        dedupStore.put({ runId, idType: "ENTITY_KEY", idVal: canonicalKey });
+      }
+      if (payload.evidence) {
+        for (const ev of payload.evidence) {
+          evStore.put({ runId, canonicalKey: ev.canonicalKey, evidence: ev.evidence });
+        }
+      }
+      cpStore.put({ ...payload.checkpoint, runId, batchIndex: payload.batchIndex });
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onerror = () => {
+        db.close();
+        reject(tx.error);
+      };
+    });
+  } catch {
+    return memoryFallback.saveBatch(runId, payload);
+  }
+}
+async function getAllRelevantLeads(runId) {
+  if (!hasIndexedDB()) {
+    return memoryFallback.getAllRelevantLeads(runId);
+  }
+  try {
+    const db = await openDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction("entities", "readonly");
+      const store = tx.objectStore("entities");
+      const index = store.index("by_run");
+      const request = index.getAll(runId);
+      request.onsuccess = () => {
+        db.close();
+        const records = request.result || [];
+        const relevant = records.filter((r) => !r.relevanceDecision || r.relevanceDecision === "RELEVANT");
+        resolve(relevant);
+      };
+      request.onerror = () => {
+        db.close();
+        reject(request.error);
+      };
+    });
+  } catch {
+    return memoryFallback.getAllRelevantLeads(runId);
+  }
+}
+async function getSeenAdIds(runId) {
+  if (!hasIndexedDB()) {
+    return memoryFallback.getSeenAdIds(runId);
+  }
+  try {
+    const db = await openDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction("dedupIndex", "readonly");
+      const store = tx.objectStore("dedupIndex");
+      const index = store.index("by_run");
+      const request = index.getAll(runId);
+      request.onsuccess = () => {
+        db.close();
+        const items = request.result || [];
+        const ids = /* @__PURE__ */ new Set();
+        for (const it of items) {
+          if (it.idType === "AD_ID") ids.add(it.idVal);
+        }
+        resolve(ids);
+      };
+      request.onerror = () => {
+        db.close();
+        reject(request.error);
+      };
+    });
+  } catch {
+    return memoryFallback.getSeenAdIds(runId);
+  }
+}
+async function getSeenEntityKeys(runId) {
+  if (!hasIndexedDB()) {
+    return memoryFallback.getSeenEntityKeys(runId);
+  }
+  try {
+    const db = await openDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction("dedupIndex", "readonly");
+      const store = tx.objectStore("dedupIndex");
+      const index = store.index("by_run");
+      const request = index.getAll(runId);
+      request.onsuccess = () => {
+        db.close();
+        const items = request.result || [];
+        const keys = /* @__PURE__ */ new Set();
+        for (const it of items) {
+          if (it.idType === "ENTITY_KEY") keys.add(it.idVal);
+        }
+        resolve(keys);
+      };
+      request.onerror = () => {
+        db.close();
+        reject(request.error);
+      };
+    });
+  } catch {
+    return memoryFallback.getSeenEntityKeys(runId);
+  }
+}
+
+// src/extension/bulkProcessor.ts
+function normalizeAdvertiserName(rawName) {
+  let name = (rawName || "").trim();
+  if (!name || name === "Unknown Advertiser") return "Unknown Advertiser";
+  name = name.replace(/\s*·\s*Sponsored.*$/i, "");
+  name = name.replace(/\s*Sponsored.*$/i, "");
+  name = name.replace(/\s+page$/i, "");
+  name = name.replace(/\s*\(official\)$/i, "");
+  return name.trim();
+}
+function getCanonicalEntityKey(pageName, fbPageId) {
+  const clean = normalizeAdvertiserName(pageName).toLowerCase();
+  if (fbPageId && fbPageId.length > 4) {
+    return `fb_${fbPageId}`;
+  }
+  return `name_${clean.replace(/[^a-z0-9]/g, "_")}`;
+}
+async function processBatch(candidates, existingEntitiesMap, seenAdLibraryIds, seenEntityKeys, currentCounters, options) {
+  const {
+    runId,
+    countryCode,
+    locationName,
+    currentKeyword,
+    intent,
+    effectiveCeiling
+  } = options;
+  const processedAds = [];
+  const updatedEntities = [];
+  const newEvidence = [];
+  const newAdIdsAdded = [];
+  const newEntityKeysAdded = [];
+  const counters = {
+    rawAds: currentCounters.rawAds,
+    normalizedCandidates: currentCounters.normalizedCandidates,
+    relevantCandidates: currentCounters.relevantCandidates,
+    uncertainCandidates: currentCounters.uncertainCandidates,
+    notRelevantCandidates: currentCounters.notRelevantCandidates,
+    duplicatesRemoved: currentCounters.duplicatesRemoved,
+    finalUniqueLeads: currentCounters.finalUniqueLeads,
+    uniqueEntitiesObserved: currentCounters.uniqueEntitiesObserved ?? currentCounters.finalUniqueLeads,
+    relevantEntities: currentCounters.relevantEntities ?? currentCounters.finalUniqueLeads,
+    uncertainEntities: currentCounters.uncertainEntities ?? currentCounters.uncertainCandidates,
+    notRelevantEntities: currentCounters.notRelevantEntities ?? currentCounters.notRelevantCandidates,
+    keywordsCompleted: currentCounters.keywordsCompleted ?? 0,
+    keywordsTotal: currentCounters.keywordsTotal ?? 1,
+    finalUniqueRelevantLeads: currentCounters.finalUniqueRelevantLeads ?? currentCounters.finalUniqueLeads,
+    reasonCodes: { ...currentCounters.reasonCodes || {} }
+  };
+  let safetyLimitReached = (counters.finalUniqueRelevantLeads || counters.finalUniqueLeads) >= effectiveCeiling;
+  let newUniqueRelevantLeadsCount = 0;
   for (const cand of candidates) {
-    totalAdsCount++;
-    const cleanName = (cand.pageName || "Unknown Advertiser").trim();
-    if (!cleanName || cleanName === "Unknown Advertiser") continue;
-    const key = cleanName.toLowerCase();
-    const group = candidateGroups.get(key) || [];
-    group.push(cand);
-    candidateGroups.set(key, group);
-  }
-  const leadMap = /* @__PURE__ */ new Map();
-  for (const lead of existingLeads) {
-    leadMap.set(lead.canonicalName.toLowerCase(), { ...lead });
-  }
-  let rejectedCount = 0;
-  let uncertainCount = 0;
-  let evaluatedCount = 0;
-  for (const [key, cands] of candidateGroups.entries()) {
-    evaluatedCount++;
-    const primaryCand = cands[0];
-    const cleanName = primaryCand.pageName.trim();
-    const evalResult = intent ? LeadRelevanceEngine.evaluateEntity(cleanName, cands, intent) : null;
-    if (intent && evalResult) {
-      const code = evalResult.reasonCode || "UNKNOWN";
-      reasonCodes[code] = (reasonCodes[code] || 0) + 1;
+    if (seenAdLibraryIds.has(cand.libraryId)) {
+      counters.duplicatesRemoved++;
+      continue;
+    }
+    seenAdLibraryIds.add(cand.libraryId);
+    newAdIdsAdded.push(cand.libraryId);
+    counters.rawAds++;
+    counters.normalizedCandidates++;
+    processedAds.push(cand);
+    const cleanName = normalizeAdvertiserName(cand.pageName);
+    const entityKey = getCanonicalEntityKey(cleanName, cand.facebookPageId);
+    const existingEntity = existingEntitiesMap.get(entityKey);
+    if (existingEntity) {
+      counters.duplicatesRemoved++;
+      existingEntity.activeAdCount++;
+      existingEntity.adCount = (existingEntity.adCount || 0) + 1;
+      if (!existingEntity.adLibraryIds.includes(cand.libraryId)) {
+        existingEntity.adLibraryIds.push(cand.libraryId);
+      }
+      if (currentKeyword && !existingEntity.matchedKeywords.includes(currentKeyword)) {
+        existingEntity.matchedKeywords.push(currentKeyword);
+      }
+      if (!existingEntity.destinationUrl && cand.destinationUrl) {
+        existingEntity.destinationUrl = cand.destinationUrl;
+        existingEntity.destinationDomain = cand.destinationDomain;
+        existingEntity.websiteState = "found";
+      }
+      if (!existingEntity.facebookPageUrl && cand.facebookPageUrl) {
+        existingEntity.facebookPageUrl = cand.facebookPageUrl;
+        existingEntity.facebookPageState = "found";
+      }
+      if (!existingEntity.sampleCopy && cand.bodyCopy) {
+        existingEntity.sampleCopy = cand.bodyCopy;
+      }
+      if (!existingEntity.sampleCta && cand.ctaText) {
+        existingEntity.sampleCta = cand.ctaText;
+      }
+      if (!updatedEntities.some((e) => e.id === existingEntity.id)) {
+        updatedEntities.push(existingEntity);
+      }
+      continue;
+    }
+    counters.uniqueEntitiesObserved = (counters.uniqueEntitiesObserved || 0) + 1;
+    seenEntityKeys.add(entityKey);
+    newEntityKeysAdded.push(entityKey);
+    let evalResult = null;
+    if (intent) {
+      evalResult = LeadRelevanceEngine.evaluateCandidate(cand, intent);
+      if (evalResult.reasonCodes && Array.isArray(evalResult.reasonCodes)) {
+        for (const code of evalResult.reasonCodes) {
+          counters.reasonCodes[code] = (counters.reasonCodes[code] || 0) + 1;
+        }
+      }
       if (evalResult.decision === "NOT_RELEVANT") {
-        rejectedCount++;
+        counters.notRelevantCandidates++;
+        counters.notRelevantEntities = (counters.notRelevantEntities || 0) + 1;
         continue;
       }
       if (evalResult.decision === "UNCERTAIN") {
-        uncertainCount++;
+        counters.uncertainCandidates++;
+        counters.uncertainEntities = (counters.uncertainEntities || 0) + 1;
         continue;
       }
     }
-    const existing = leadMap.get(key);
-    if (existing) {
-      existing.activeAdCount += cands.length;
-      for (const cand of cands) {
-        if (!existing.adLibraryIds.includes(cand.libraryId)) {
-          existing.adLibraryIds.push(cand.libraryId);
-        }
-        if (cand.observedKeyword && !existing.matchedKeywords.includes(cand.observedKeyword)) {
-          existing.matchedKeywords.push(cand.observedKeyword);
-        }
-        if (!existing.facebookPageUrl && cand.facebookPageUrl) {
-          existing.facebookPageUrl = cand.facebookPageUrl;
-          existing.facebookPageState = "found";
-        }
-        if (!existing.destinationUrl && cand.destinationUrl) {
-          existing.destinationUrl = cand.destinationUrl;
-          existing.destinationDomain = cand.destinationDomain;
-          existing.websiteState = "found";
-        }
-        if (!existing.sampleCopy && cand.bodyCopy) {
-          existing.sampleCopy = cand.bodyCopy;
-        }
-        if (!existing.sampleCta && cand.ctaText) {
-          existing.sampleCta = cand.ctaText;
-        }
-      }
-      if (evalResult) {
-        existing.relevanceScore = Math.max(existing.relevanceScore || 0, evalResult.score);
-        existing.relevanceDecision = evalResult.decision;
-        existing.relevanceConfidence = evalResult.confidence;
-        existing.relevanceReasons = evalResult.reasons;
-        existing.relevanceMatchedTerms = evalResult.matchedTerms;
-        existing.relevanceEvidence = evalResult.evidence;
-        existing.relevanceStrategyVersion = evalResult.strategyVersion;
-        existing.engineVersion = evalResult.engineVersion;
-        existing.presetVersion = evalResult.presetVersion;
-      }
-    } else {
-      if (leadMap.size >= maxResults) {
-        continue;
-      }
-      const bestFbUrl = cands.find((c) => Boolean(c.facebookPageUrl))?.facebookPageUrl;
-      const bestDestCand = cands.find((c) => Boolean(c.destinationUrl));
-      const bestDestUrl = bestDestCand?.destinationUrl;
-      const bestDestDomain = bestDestCand?.destinationDomain;
-      const bestCopy = cands.find((c) => Boolean(c.bodyCopy))?.bodyCopy;
-      const bestCta = cands.find((c) => Boolean(c.ctaText))?.ctaText;
-      const adIds = Array.from(new Set(cands.map((c) => c.libraryId).filter(Boolean)));
-      const matchedKws = Array.from(new Set(cands.map((c) => c.observedKeyword).filter(Boolean)));
-      const fbState = bestFbUrl ? "found" : "not_found";
-      const webState = bestDestUrl ? "found" : "not_found";
-      const lead = {
-        id: `lead_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
-        name: cleanName,
-        canonicalName: cleanName,
-        facebookPageName: cleanName,
-        facebookPageUrl: bestFbUrl,
-        facebookPageState: fbState,
-        destinationUrl: bestDestUrl,
-        destinationDomain: bestDestDomain,
-        websiteState: webState,
-        activeAdCount: cands.length,
-        adLibraryIds: adIds,
-        adLibraryUrl: adIds[0] ? `https://www.facebook.com/ads/library/?id=${adIds[0]}` : void 0,
-        matchedKeywords: matchedKws.length > 0 ? matchedKws : intent?.primaryKeywords?.slice(0, 1) || [],
-        locationCode,
-        locationName,
-        status: webState === "found" ? "QUALIFIED" : "REVIEW_REQUIRED",
-        discoveredAt: (/* @__PURE__ */ new Date()).toISOString(),
-        sampleCopy: bestCopy,
-        sampleCta: bestCta,
-        relevanceScore: evalResult?.score,
-        relevanceDecision: evalResult?.decision,
-        relevanceConfidence: evalResult?.confidence,
-        relevanceReasons: evalResult?.reasons,
-        relevanceMatchedTerms: evalResult?.matchedTerms,
-        relevanceEvidence: evalResult?.evidence,
-        relevanceStrategyVersion: evalResult?.strategyVersion,
-        engineVersion: evalResult?.engineVersion,
-        presetVersion: evalResult?.presetVersion
-      };
-      leadMap.set(key, lead);
+    counters.relevantCandidates++;
+    counters.relevantEntities = (counters.relevantEntities || 0) + 1;
+    const currentLeadCount = counters.finalUniqueRelevantLeads || counters.finalUniqueLeads;
+    if (currentLeadCount >= effectiveCeiling) {
+      safetyLimitReached = true;
+      break;
+    }
+    const webState = cand.destinationUrl ? "found" : "not_found";
+    const fbState = cand.facebookPageUrl ? "found" : "not_found";
+    const newLead = {
+      id: `lead_${runId}_${entityKey}`,
+      name: cleanName,
+      canonicalName: cleanName,
+      facebookPageName: cleanName,
+      facebookPageUrl: cand.facebookPageUrl,
+      facebookPageState: fbState,
+      destinationUrl: cand.destinationUrl,
+      destinationDomain: cand.destinationDomain,
+      websiteState: webState,
+      adCount: 1,
+      activeAdCount: 1,
+      adLibraryIds: [cand.libraryId],
+      adLibraryUrl: `https://www.facebook.com/ads/library/?id=${cand.libraryId}`,
+      matchedKeywords: currentKeyword ? [currentKeyword] : intent?.primaryKeywords?.slice(0, 1) || [],
+      locationCode: countryCode,
+      locationName,
+      status: webState === "found" ? "QUALIFIED" : "REVIEW_REQUIRED",
+      discoveredAt: (/* @__PURE__ */ new Date()).toISOString(),
+      sampleCopy: cand.bodyCopy,
+      sampleCta: cand.ctaText,
+      relevanceScore: evalResult?.score,
+      relevanceDecision: evalResult?.decision || "RELEVANT",
+      relevanceConfidence: evalResult?.confidence,
+      relevanceReasons: evalResult?.reasons,
+      relevanceMatchedTerms: evalResult?.matchedTerms,
+      relevanceEvidence: evalResult?.evidence,
+      relevanceStrategyVersion: evalResult?.strategyVersion,
+      engineVersion: evalResult?.engineVersion,
+      presetVersion: evalResult?.presetVersion
+    };
+    existingEntitiesMap.set(entityKey, newLead);
+    updatedEntities.push(newLead);
+    if (evalResult?.evidence) {
+      newEvidence.push({
+        canonicalKey: entityKey,
+        evidence: evalResult.evidence
+      });
+    }
+    counters.finalUniqueLeads++;
+    counters.finalUniqueRelevantLeads = counters.finalUniqueLeads;
+    newUniqueRelevantLeadsCount++;
+    if (counters.finalUniqueLeads >= effectiveCeiling) {
+      safetyLimitReached = true;
+      break;
     }
   }
-  const finalLeads = Array.from(leadMap.values());
-  const duplicatesRemoved = totalAdsCount - finalLeads.length;
+  Object.assign(currentCounters, counters);
   return {
-    leads: finalLeads,
-    totalAdsCount,
-    rejectedCount,
-    uncertainCount,
-    evaluatedCount,
-    counters: {
-      rawAds: totalAdsCount,
-      normalizedCandidates: evaluatedCount,
-      relevantCandidates: finalLeads.length,
-      uncertainCandidates: uncertainCount,
-      notRelevantCandidates: rejectedCount,
-      duplicatesRemoved: Math.max(0, duplicatesRemoved),
-      finalUniqueLeads: finalLeads.length,
-      reasonCodes
-    }
+    processedAds,
+    updatedEntities,
+    newEvidence,
+    newAdIdsAdded,
+    newEntityKeysAdded,
+    counters,
+    safetyLimitReached,
+    newUniqueRelevantLeadsCount
   };
 }
 
@@ -2044,13 +2423,14 @@ function broadcastProgress(run, stage, logMessage) {
   }
   saveActiveRun(run).catch(() => {
   });
+  const authoritativeLeadCount = run.counters?.finalUniqueRelevantLeads ?? run.counters?.finalUniqueLeads ?? run.leads.length;
   if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
     chrome.runtime.sendMessage({
       type: "RESEARCH_PROGRESS",
       payload: {
         runId: run.runId,
         status: run.status,
-        leadCount: run.leads.length,
+        leadCount: authoritativeLeadCount,
         maxResults: run.maxResults,
         totalAdsInspected: run.totalAdsInspected,
         logMessage,
@@ -2097,7 +2477,9 @@ async function executeResearchPipeline(payload, providedRunId, providedRun) {
   cancelledRuns.delete(runId);
   const keywords = payload.keywords.map((k) => k.trim()).filter(Boolean);
   const countryCode = payload.countryCode || "US";
-  const targetLeadCount = Math.max(1, payload.maxResults || 10);
+  const isAutoDiscovery = payload.researchMode === "AUTO_DISCOVERY" || payload.maxResults === void 0;
+  const effectiveCeiling = isAutoDiscovery ? MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH : Math.min(Math.max(1, payload.maxResults || MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH), MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH);
+  const targetLeadCount = isAutoDiscovery ? void 0 : effectiveCeiling;
   const researchIntent = compileResearchIntent(
     payload.mode,
     keywords,
@@ -2113,7 +2495,10 @@ async function executeResearchPipeline(payload, providedRunId, providedRun) {
     keywords,
     countryCode,
     locationName: payload.locationName,
-    maxResults: targetLeadCount,
+    researchMode: isAutoDiscovery ? "AUTO_DISCOVERY" : void 0,
+    maxFinalUniqueRelevantLeads: isAutoDiscovery ? MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH : void 0,
+    maxResults: payload.maxResults ?? effectiveCeiling,
+    targetLeadCount,
     status: "STARTING",
     leads: [],
     rejectedLeadsCount: 0,
@@ -2133,21 +2518,35 @@ async function executeResearchPipeline(payload, providedRunId, providedRun) {
     startedAt: (/* @__PURE__ */ new Date()).toISOString(),
     lastUpdatedAt: (/* @__PURE__ */ new Date()).toISOString(),
     schemaVersion: SCHEMA_VERSION,
-    totalAdsInspected: 0,
-    targetLeadCount
+    totalAdsInspected: 0
   };
+  await initBulkStore();
+  const seenAdLibraryIds = await getSeenAdIds(runId);
+  const seenEntityKeys = await getSeenEntityKeys(runId);
+  const existingEntitiesMap = /* @__PURE__ */ new Map();
+  const existingLeads = await getAllRelevantLeads(runId);
+  for (const lead of existingLeads) {
+    const canonicalKey = lead.canonicalName ? lead.canonicalName.toLowerCase() : lead.name.toLowerCase();
+    existingEntitiesMap.set(canonicalKey, lead);
+  }
   await saveActiveRun(initialRun);
-  broadcastProgress(initialRun, "STARTING", `Research initiated for ${targetLeadCount} leads in ${payload.locationName}...`);
+  const startBroadcastMsg = isAutoDiscovery ? `Auto-discovery research initiated in ${payload.locationName}...` : `Research initiated for ${targetLeadCount} leads in ${payload.locationName}...`;
+  broadcastProgress(initialRun, "STARTING", startBroadcastMsg);
   let currentTabId = null;
-  let allCandidates = initialRun.allCandidates || [];
   const startKi = initialRun.activeKeywordIndex || 0;
+  const completedKeywords = [...initialRun.frontier?.completedKeywords || []];
   let isStalled = false;
+  let batchIndex = initialRun.lastCheckpointBatch || 0;
   try {
     for (let ki = startKi; ki < keywords.length; ki++) {
       if (cancelledRuns.has(runId)) break;
-      if (initialRun.leads.length >= targetLeadCount) break;
+      const currentLeadCount = initialRun.counters?.finalUniqueRelevantLeads ?? initialRun.counters?.finalUniqueLeads ?? existingEntitiesMap.size;
+      if (currentLeadCount >= effectiveCeiling) break;
       const currentKeyword = keywords[ki];
       initialRun.activeKeywordIndex = ki;
+      initialRun.currentKeyword = currentKeyword;
+      initialRun.keywordsCompleted = completedKeywords.length;
+      initialRun.totalKeywords = keywords.length;
       initialRun.status = "NAVIGATING";
       const searchUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=${encodeURIComponent(countryCode)}&q=${encodeURIComponent(currentKeyword)}`;
       broadcastProgress(initialRun, "NAVIGATING", `Opening Meta Ad Library for "${currentKeyword}" in ${countryCode}...`);
@@ -2166,9 +2565,10 @@ async function executeResearchPipeline(payload, providedRunId, providedRun) {
       broadcastProgress(initialRun, "COLLECTING", `Connected to Ad Library. Starting ad collection for "${currentKeyword}"...`);
       let consecutiveNoNewCards = 0;
       let scrollAttempts = 0;
-      const maxScrolls = Math.max(25, Math.ceil(targetLeadCount * 3));
+      const maxScrolls = isAutoDiscovery ? 60 : Math.max(25, Math.ceil((targetLeadCount || 10) * 3));
       while (scrollAttempts < maxScrolls && !cancelledRuns.has(runId)) {
-        if (initialRun.leads.length >= targetLeadCount) break;
+        const liveCount = initialRun.counters?.finalUniqueRelevantLeads ?? initialRun.counters?.finalUniqueLeads ?? existingEntitiesMap.size;
+        if (liveCount >= effectiveCeiling) break;
         scrollAttempts++;
         try {
           const tabCheck = await chrome.tabs.get(currentTabId);
@@ -2211,45 +2611,108 @@ async function executeResearchPipeline(payload, providedRunId, providedRun) {
           initialRun.challengeReason = response.reason || "Meta Ad Library security challenge presented.";
           initialRun.stopReason = isRateLimit ? "RATE_LIMITED" : "CHALLENGED";
           broadcastProgress(initialRun, initialRun.status, `Access restricted: ${initialRun.challengeReason}`);
+          await saveRunRecord(initialRun);
           await saveActiveRun(initialRun);
           await appendToHistory(initialRun);
           return initialRun;
         }
         const candidates = response && response.payload && response.payload.candidates || [];
         if (candidates.length > 0) {
-          const prevCandidatesCount = allCandidates.length;
-          for (const cand of candidates) {
-            if (!allCandidates.some((c) => c.libraryId === cand.libraryId)) {
-              allCandidates.push(cand);
+          batchIndex++;
+          const batchResult = await processBatch(
+            candidates,
+            existingEntitiesMap,
+            seenAdLibraryIds,
+            seenEntityKeys,
+            initialRun.counters || {
+              rawAds: 0,
+              normalizedCandidates: 0,
+              relevantCandidates: 0,
+              uncertainCandidates: 0,
+              notRelevantCandidates: 0,
+              duplicatesRemoved: 0,
+              finalUniqueLeads: 0,
+              uniqueEntitiesObserved: 0,
+              relevantEntities: 0,
+              uncertainEntities: 0,
+              notRelevantEntities: 0,
+              keywordsCompleted: completedKeywords.length,
+              keywordsTotal: keywords.length,
+              finalUniqueRelevantLeads: 0,
+              reasonCodes: {}
+            },
+            {
+              runId,
+              countryCode,
+              locationName: payload.locationName,
+              currentKeyword,
+              intent: researchIntent,
+              effectiveCeiling
             }
-          }
-          const newlyAdded = allCandidates.length - prevCandidatesCount;
-          if (newlyAdded === 0) {
+          );
+          await saveBatch(runId, {
+            batchIndex,
+            ads: batchResult.processedAds,
+            entities: batchResult.updatedEntities,
+            evidence: batchResult.newEvidence,
+            checkpoint: {
+              runId,
+              batchIndex,
+              timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+              activeKeywordIndex: ki,
+              currentKeyword,
+              rawAdsCount: batchResult.counters.rawAds,
+              normalizedCandidatesCount: batchResult.counters.normalizedCandidates,
+              uniqueEntitiesCount: batchResult.counters.uniqueEntitiesObserved || 0,
+              relevantEntitiesCount: batchResult.counters.relevantEntities || 0,
+              uncertainEntitiesCount: batchResult.counters.uncertainEntities || 0,
+              notRelevantEntitiesCount: batchResult.counters.notRelevantEntities || 0,
+              duplicatesRemovedCount: batchResult.counters.duplicatesRemoved,
+              finalUniqueRelevantLeads: batchResult.counters.finalUniqueRelevantLeads || batchResult.counters.finalUniqueLeads,
+              seenLibraryIdsCount: seenAdLibraryIds.size,
+              seenEntityKeysCount: seenEntityKeys.size
+            }
+          });
+          const allLeadsList = Array.from(existingEntitiesMap.values());
+          initialRun.leads = allLeadsList.slice(0, 50);
+          initialRun.totalAdsInspected = batchResult.counters.rawAds;
+          initialRun.counters = batchResult.counters;
+          initialRun.rejectedLeadsCount = batchResult.counters.notRelevantCandidates;
+          initialRun.uncertainLeadsCount = batchResult.counters.uncertainCandidates;
+          initialRun.lastCheckpointBatch = batchIndex;
+          initialRun.currentKeyword = currentKeyword;
+          initialRun.keywordsCompleted = completedKeywords.length;
+          initialRun.totalKeywords = keywords.length;
+          initialRun.entitiesEvaluated = batchResult.counters.uniqueEntitiesObserved || 0;
+          initialRun.frontier = {
+            activeKeywordIndex: ki,
+            keywords,
+            currentKeyword,
+            completedKeywords: [...completedKeywords],
+            seenLibraryIdsCount: seenAdLibraryIds.size,
+            seenEntityKeysCount: seenEntityKeys.size,
+            lastBatchIndex: batchIndex,
+            checkpointTimestamp: (/* @__PURE__ */ new Date()).toISOString()
+          };
+          if (batchResult.processedAds.length === 0) {
             consecutiveNoNewCards++;
           } else {
             consecutiveNoNewCards = 0;
           }
-          const aggregated = aggregateCandidatesToLeads(
-            allCandidates,
-            countryCode,
-            payload.locationName,
-            targetLeadCount,
-            [],
-            researchIntent
-          );
-          initialRun.leads = aggregated.leads;
-          initialRun.totalAdsInspected = allCandidates.length;
-          initialRun.allCandidates = allCandidates;
-          initialRun.rejectedLeadsCount = aggregated.rejectedCount;
-          initialRun.uncertainLeadsCount = aggregated.uncertainCount;
-          initialRun.counters = aggregated.counters;
+          candidates.length = 0;
+          batchResult.processedAds.length = 0;
           broadcastProgress(
             initialRun,
             "COLLECTING",
-            `Observed ${initialRun.leads.length} unique relevant leads from ${allCandidates.length} ads (${aggregated.rejectedCount} irrelevant filtered, scroll ${scrollAttempts})...`
+            `Discovered ${initialRun.counters.finalUniqueRelevantLeads || initialRun.counters.finalUniqueLeads} leads | Inspected ${initialRun.counters.rawAds} ads | Evaluated ${initialRun.counters.uniqueEntitiesObserved || 0} entities (${currentKeyword})...`
           );
-          if (initialRun.leads.length >= targetLeadCount) {
-            broadcastProgress(initialRun, "NORMALIZING", `Target lead quota of ${targetLeadCount} reached.`);
+          const finalLeadsCount = initialRun.counters.finalUniqueRelevantLeads || initialRun.counters.finalUniqueLeads;
+          if (batchResult.safetyLimitReached || finalLeadsCount >= effectiveCeiling) {
+            if (isAutoDiscovery) {
+              broadcastProgress(initialRun, "NORMALIZING", `5,000-lead safety limit reached.`);
+            } else {
+              broadcastProgress(initialRun, "NORMALIZING", `Target lead quota of ${targetLeadCount} reached.`);
+            }
             break;
           }
           if (response.payload && response.payload.atBottom && consecutiveNoNewCards >= 2) {
@@ -2266,7 +2729,13 @@ async function executeResearchPipeline(payload, providedRunId, providedRun) {
           await wait(2e3);
         }
       }
+      completedKeywords.push(currentKeyword);
+      initialRun.keywordsCompleted = completedKeywords.length;
+      if ((initialRun.counters?.finalUniqueRelevantLeads || initialRun.counters?.finalUniqueLeads || 0) >= effectiveCeiling) {
+        break;
+      }
     }
+    const finalLeadCount = initialRun.counters?.finalUniqueRelevantLeads ?? initialRun.counters?.finalUniqueLeads ?? existingEntitiesMap.size;
     if (cancelledRuns.has(runId)) {
       initialRun.status = "CANCELLED";
       initialRun.stopReason = "USER_CANCELLED";
@@ -2276,25 +2745,38 @@ async function executeResearchPipeline(payload, providedRunId, providedRun) {
       initialRun.stopReason = "BROWSER_TAB_CLOSED";
       broadcastProgress(initialRun, "BROWSER_TAB_CLOSED", `Research halted because the Ad Library tab was closed.`);
     } else if (initialRun.status === "CHALLENGED" || initialRun.status === "RATE_LIMITED" || initialRun.status === "BLOCKED") {
-    } else {
-      if (initialRun.leads.length >= targetLeadCount) {
-        initialRun.status = "COMPLETED";
-        initialRun.stopReason = "TARGET_REACHED";
+    } else if (finalLeadCount >= effectiveCeiling) {
+      initialRun.status = "COMPLETED";
+      if (isAutoDiscovery) {
+        initialRun.stopReason = "SAFETY_LIMIT_REACHED";
+        broadcastProgress(
+          initialRun,
+          "COMPLETED",
+          `Research stopped at the current system safety limit of 5,000 unique relevant leads.`
+        );
       } else {
-        initialRun.status = "PARTIAL";
-        if (allCandidates.length === 0) {
-          initialRun.stopReason = "NO_NEW_RESULTS_OBSERVED";
-        } else if (isStalled) {
-          initialRun.stopReason = "SOURCE_PROGRESS_STALLED";
-        } else {
-          initialRun.stopReason = "SOURCE_EXHAUSTED";
-        }
+        initialRun.stopReason = "TARGET_REACHED";
+        broadcastProgress(
+          initialRun,
+          "COMPLETED",
+          `Target lead quota of ${targetLeadCount} reached.`
+        );
+      }
+    } else {
+      initialRun.status = "PARTIAL";
+      if (initialRun.totalAdsInspected === 0) {
+        initialRun.stopReason = "NO_NEW_RESULTS_OBSERVED";
+      } else if (isStalled) {
+        initialRun.stopReason = "SOURCE_PROGRESS_STALLED";
+      } else {
+        initialRun.stopReason = "SOURCE_EXHAUSTED";
       }
       initialRun.completedAt = (/* @__PURE__ */ new Date()).toISOString();
+      const completionMsg = isAutoDiscovery ? `Auto-discovery finished (${initialRun.status} / ${initialRun.stopReason}): ${finalLeadCount} qualifying unique relevant leads discovered from ${initialRun.totalAdsInspected} public ads.` : `Research finished (${initialRun.status} / ${initialRun.stopReason}): ${finalLeadCount} of ${targetLeadCount} requested unique relevant leads observed from ${initialRun.totalAdsInspected} public ads.`;
       broadcastProgress(
         initialRun,
         initialRun.status,
-        `Research finished (${initialRun.status} / ${initialRun.stopReason}): ${initialRun.leads.length} of ${targetLeadCount} requested unique relevant leads observed from ${initialRun.totalAdsInspected} public ads.`
+        completionMsg
       );
     }
   } catch (err) {
@@ -2310,6 +2792,7 @@ async function executeResearchPipeline(payload, providedRunId, providedRun) {
       }
     }
     initialRun.completedAt = (/* @__PURE__ */ new Date()).toISOString();
+    await saveRunRecord(initialRun);
     await saveActiveRun(initialRun);
     await appendToHistory(initialRun);
     if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
@@ -2335,7 +2818,9 @@ if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage)
           }
         }
         const runId = `run_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
-        const targetLeadCount = Math.max(1, message.payload.maxResults || 10);
+        const isAutoDiscovery = message.payload.researchMode === "AUTO_DISCOVERY" || message.payload.maxResults === void 0;
+        const effectiveCeiling = isAutoDiscovery ? MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH : Math.min(Math.max(1, message.payload.maxResults || MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH), MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH);
+        const targetLeadCount = isAutoDiscovery ? void 0 : effectiveCeiling;
         const keywords = message.payload.keywords.map((k) => (k || "").trim()).filter(Boolean);
         const initialRun = {
           runId,
@@ -2346,7 +2831,10 @@ if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage)
           keywords,
           countryCode: message.payload.countryCode || "US",
           locationName: message.payload.locationName,
-          maxResults: targetLeadCount,
+          researchMode: isAutoDiscovery ? "AUTO_DISCOVERY" : void 0,
+          maxFinalUniqueRelevantLeads: isAutoDiscovery ? MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH : void 0,
+          maxResults: message.payload.maxResults ?? effectiveCeiling,
+          targetLeadCount,
           status: "STARTING",
           leads: [],
           rejectedLeadsCount: 0,
@@ -2366,8 +2854,7 @@ if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage)
           startedAt: (/* @__PURE__ */ new Date()).toISOString(),
           lastUpdatedAt: (/* @__PURE__ */ new Date()).toISOString(),
           schemaVersion: SCHEMA_VERSION,
-          totalAdsInspected: 0,
-          targetLeadCount
+          totalAdsInspected: 0
         };
         saveActiveRun(initialRun).catch(() => {
         });
@@ -2410,6 +2897,50 @@ if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage)
     if (message.type === "CLEAR_HISTORY") {
       chrome.storage.local.set({ researchHistory: [] }, () => {
         sendResponse({ success: true });
+      });
+      return true;
+    }
+    if (message.type === "GET_ALL_LEADS_FOR_EXPORT") {
+      const targetRunId = message.payload?.runId;
+      if (!targetRunId) {
+        sendResponse({ success: false, error: "runId required" });
+        return false;
+      }
+      getAllRelevantLeads(targetRunId).then((leads) => {
+        sendResponse({ success: true, leads });
+      }).catch((err) => {
+        sendResponse({ success: false, error: err.message });
+      });
+      return true;
+    }
+    if (message.type === "RESUME_RESEARCH") {
+      const targetRunId = message.payload?.runId;
+      chrome.storage.local.get(["activeResearchRun"], async (data) => {
+        const activeRun = data.activeResearchRun;
+        if (!activeRun || targetRunId && activeRun.runId !== targetRunId) {
+          sendResponse({ success: false, error: "No matching research run available to resume." });
+          return;
+        }
+        activeRun.status = "STARTING";
+        await saveActiveRun(activeRun);
+        executeResearchPipeline(
+          {
+            mode: activeRun.mode,
+            presetId: activeRun.presetId,
+            presetName: activeRun.presetName,
+            keywords: activeRun.keywords,
+            countryCode: activeRun.countryCode,
+            locationName: activeRun.locationName,
+            researchName: activeRun.researchName,
+            researchMode: activeRun.researchMode,
+            maxResults: activeRun.maxResults
+          },
+          activeRun.runId,
+          activeRun
+        ).catch((err) => {
+          console.error("[service-worker] Resume execution error:", err);
+        });
+        sendResponse({ success: true, run: activeRun });
       });
       return true;
     }

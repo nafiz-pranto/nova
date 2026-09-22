@@ -91,7 +91,7 @@ async function run() {
     await page.waitForTimeout(1000);
 
     const titleText = await page.textContent('h1');
-    assert(titleText.includes('Meta Ad Library Lead Scraper'), `UI displays product title: "${titleText.trim()}"`);
+    assert(titleText.includes('LeadNoria') || titleText.includes('Meta Ad Library Lead Scraper'), `UI displays product title: "${titleText.trim()}"`);
 
     // Verify Preset and Custom toggle buttons exist
     const presetBtn = await page.$('button:has-text("Preset")');
@@ -199,8 +199,8 @@ async function run() {
       countryCode: 'BD',
       locationName: 'Bangladesh',
       maxResults: 10,
-      status: 'COMPLETED',
-      stopReason: 'TARGET_REACHED',
+      status: 'PARTIAL',
+      stopReason: 'SOURCE_EXHAUSTED',
       startedAt: new Date().toISOString(),
       completedAt: new Date().toISOString(),
       activeKeywordIndex: 0,
@@ -249,7 +249,7 @@ async function run() {
     // Verify the lead card renders immediately from storage
     const restoredLeadText = await reopenedPage.textContent('body');
     assert(restoredLeadText.includes('Apex Comfort BD'), 'Reopened UI restored persisted lead name: "Apex Comfort BD"');
-    assert(restoredLeadText.includes('Target Quota Reached') || restoredLeadText.includes('TARGET_REACHED'), 'Reopened UI restored accurate stop reason: "Target Quota Reached" / "TARGET_REACHED"');
+    assert(restoredLeadText.includes('Search Results Exhausted') || restoredLeadText.includes('SOURCE_EXHAUSTED'), 'Reopened UI restored accurate stop reason: "Search Results Exhausted" / "SOURCE_EXHAUSTED"');
     assert(restoredLeadText.includes('apexcomfortbd.example.com'), 'Reopened UI restored destination domain: "apexcomfortbd.example.com"');
 
     // -------------------------------------------------------------

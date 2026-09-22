@@ -3,14 +3,14 @@
     "test": "Live 5",
     "requested": 5,
     "final": 5,
-    "rawAds": 29,
+    "rawAds": 19,
     "relevant": 5,
-    "irrelevant": 12,
+    "irrelevant": 9,
     "uncertain": 2,
-    "duplicates": 10,
+    "duplicates": 3,
     "stopReason": "TARGET_REACHED",
     "status": "PASS",
-    "elapsed": "6.1s",
+    "elapsed": "6.2s",
     "searchUrl": "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=BD&q=Furniture",
     "leadsSample": [
       {
@@ -21,7 +21,7 @@
         "pageUrl": "https://www.facebook.com/RFLfurniture/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 1,
+        "relevanceScore": 0.94,
         "confidence": "HIGH"
       },
       {
@@ -43,19 +43,19 @@
         "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.9,
+        "relevanceScore": 0.85,
         "confidence": "HIGH"
       },
       {
-        "name": "Amazon Home India",
+        "name": "Fairway Furniture",
         "activeAds": 1,
-        "website": "https://www.amazon.in/dp/B0F7XSGCGF?ref_=pfb_spv01_5bc232656d02b7a130fc8e8746c44e99",
-        "websiteState": "found",
-        "pageUrl": "https://www.facebook.com/amazonhomeindia/",
+        "website": "not_found",
+        "websiteState": "not_found",
+        "pageUrl": "https://www.facebook.com/FairwayFurniture/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.45,
-        "confidence": "MEDIUM"
+        "relevanceScore": 0.62,
+        "confidence": "HIGH"
       },
       {
         "name": "Raymour & Flanigan Furniture and Mattresses",
@@ -66,19 +66,19 @@
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
         "relevanceScore": 0.57,
-        "confidence": "MEDIUM"
+        "confidence": "HIGH"
       }
     ]
   },
   {
     "test": "Live 10",
     "requested": 10,
-    "final": 6,
+    "final": 5,
     "rawAds": 29,
-    "relevant": 6,
-    "irrelevant": 13,
-    "uncertain": 2,
-    "duplicates": 8,
+    "relevant": 5,
+    "irrelevant": 14,
+    "uncertain": 6,
+    "duplicates": 4,
     "stopReason": "SOURCE_EXHAUSTED",
     "status": "PARTIAL",
     "elapsed": "10.1s",
@@ -86,13 +86,13 @@
     "leadsSample": [
       {
         "name": "RFL Furniture",
-        "activeAds": 4,
+        "activeAds": 5,
         "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
         "websiteState": "found",
         "pageUrl": "https://www.facebook.com/RFLfurniture/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 1,
+        "relevanceScore": 0.94,
         "confidence": "HIGH"
       },
       {
@@ -114,7 +114,18 @@
         "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.9,
+        "relevanceScore": 0.85,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Fairway Furniture",
+        "activeAds": 1,
+        "website": "not_found",
+        "websiteState": "not_found",
+        "pageUrl": "https://www.facebook.com/FairwayFurniture/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.62,
         "confidence": "HIGH"
       },
       {
@@ -126,18 +137,7 @@
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
         "relevanceScore": 0.57,
-        "confidence": "MEDIUM"
-      },
-      {
-        "name": "Strawberry - Lifestyle & Fashion",
-        "activeAds": 1,
-        "website": "https://www.hometalk.com/dcg/How to decorate your home with easy payments/?source=facebook&lang=en&adtext=Learn more about sofas and furniture on installments&theme=dark_mode&cid=3103991662&sid=4388678308&adid={{ad.id}}&terms=Sofas with Zero Upfront Payment Free Delivery,Pay Monthly Sofas with no Credit Check no Deposit,Sofa on Finance Bad Credit no Deposit {country} no Upfront Cost,{country}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,{city}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,Sofa Pay Monthly no Credit Check",
-        "websiteState": "found",
-        "pageUrl": "https://www.facebook.com/61552620205087/",
-        "pageState": "found",
-        "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.47,
-        "confidence": "MEDIUM"
+        "confidence": "HIGH"
       }
     ]
   },
@@ -148,8 +148,8 @@
     "rawAds": 29,
     "relevant": 6,
     "irrelevant": 13,
-    "uncertain": 2,
-    "duplicates": 8,
+    "uncertain": 6,
+    "duplicates": 4,
     "stopReason": "SOURCE_EXHAUSTED",
     "status": "PARTIAL",
     "elapsed": "10.1s",
@@ -157,13 +157,13 @@
     "leadsSample": [
       {
         "name": "RFL Furniture",
-        "activeAds": 4,
+        "activeAds": 5,
         "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
         "websiteState": "found",
         "pageUrl": "https://www.facebook.com/RFLfurniture/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 1,
+        "relevanceScore": 0.94,
         "confidence": "HIGH"
       },
       {
@@ -185,42 +185,42 @@
         "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.9,
+        "relevanceScore": 0.85,
         "confidence": "HIGH"
       },
       {
-        "name": "Raymour & Flanigan Furniture and Mattresses",
+        "name": "Amazon Home India",
         "activeAds": 1,
-        "website": "https://www.raymourflanigan.com/mattresses?utm_source=Facebook&utm_medium=Social&utm_campaign=reachmattress_evergreen&utm_content=tempur_review",
+        "website": "https://www.amazon.in/dp/B0F7XSGCGF?ref_=pfb_spv01_5bc232656d02b7a130fc8e8746c44e99",
         "websiteState": "found",
-        "pageUrl": "https://www.facebook.com/raymourandflanigan/",
+        "pageUrl": "https://www.facebook.com/amazonhomeindia/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.57,
+        "relevanceScore": 0.5,
         "confidence": "MEDIUM"
       },
       {
-        "name": "Strawberry - Lifestyle & Fashion",
+        "name": "Fairway Furniture",
         "activeAds": 1,
-        "website": "https://www.hometalk.com/dcg/How to decorate your home with easy payments/?source=facebook&lang=en&adtext=Learn more about sofas and furniture on installments&theme=dark_mode&cid=3103991662&sid=4388678308&adid={{ad.id}}&terms=Sofas with Zero Upfront Payment Free Delivery,Pay Monthly Sofas with no Credit Check no Deposit,Sofa on Finance Bad Credit no Deposit {country} no Upfront Cost,{country}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,{city}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,Sofa Pay Monthly no Credit Check",
-        "websiteState": "found",
-        "pageUrl": "https://www.facebook.com/61552620205087/",
+        "website": "not_found",
+        "websiteState": "not_found",
+        "pageUrl": "https://www.facebook.com/FairwayFurniture/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.47,
-        "confidence": "MEDIUM"
+        "relevanceScore": 0.62,
+        "confidence": "HIGH"
       }
     ]
   },
   {
     "test": "Live 50",
     "requested": 50,
-    "final": 7,
+    "final": 5,
     "rawAds": 29,
-    "relevant": 7,
-    "irrelevant": 12,
-    "uncertain": 2,
-    "duplicates": 8,
+    "relevant": 5,
+    "irrelevant": 14,
+    "uncertain": 6,
+    "duplicates": 4,
     "stopReason": "SOURCE_EXHAUSTED",
     "status": "PARTIAL",
     "elapsed": "10.0s",
@@ -228,13 +228,13 @@
     "leadsSample": [
       {
         "name": "RFL Furniture",
-        "activeAds": 4,
+        "activeAds": 5,
         "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
         "websiteState": "found",
         "pageUrl": "https://www.facebook.com/RFLfurniture/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 1,
+        "relevanceScore": 0.94,
         "confidence": "HIGH"
       },
       {
@@ -256,19 +256,19 @@
         "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.9,
+        "relevanceScore": 0.85,
         "confidence": "HIGH"
       },
       {
-        "name": "Amazon Home India",
+        "name": "Fairway Furniture",
         "activeAds": 1,
-        "website": "https://www.amazon.in/dp/B0F7XSGCGF?ref_=pfb_spv01_5bc232656d02b7a130fc8e8746c44e99",
-        "websiteState": "found",
-        "pageUrl": "https://www.facebook.com/amazonhomeindia/",
+        "website": "not_found",
+        "websiteState": "not_found",
+        "pageUrl": "https://www.facebook.com/FairwayFurniture/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.45,
-        "confidence": "MEDIUM"
+        "relevanceScore": 0.62,
+        "confidence": "HIGH"
       },
       {
         "name": "Raymour & Flanigan Furniture and Mattresses",
@@ -279,19 +279,19 @@
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
         "relevanceScore": 0.57,
-        "confidence": "MEDIUM"
+        "confidence": "HIGH"
       }
     ]
   },
   {
     "test": "Live 100",
     "requested": 100,
-    "final": 7,
+    "final": 5,
     "rawAds": 29,
-    "relevant": 7,
-    "irrelevant": 12,
-    "uncertain": 2,
-    "duplicates": 8,
+    "relevant": 5,
+    "irrelevant": 14,
+    "uncertain": 6,
+    "duplicates": 4,
     "stopReason": "SOURCE_EXHAUSTED",
     "status": "PARTIAL",
     "elapsed": "10.0s",
@@ -299,13 +299,13 @@
     "leadsSample": [
       {
         "name": "RFL Furniture",
-        "activeAds": 4,
+        "activeAds": 5,
         "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
         "websiteState": "found",
         "pageUrl": "https://www.facebook.com/RFLfurniture/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 1,
+        "relevanceScore": 0.94,
         "confidence": "HIGH"
       },
       {
@@ -327,19 +327,19 @@
         "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.9,
+        "relevanceScore": 0.85,
         "confidence": "HIGH"
       },
       {
-        "name": "Amazon Home India",
+        "name": "Fairway Furniture",
         "activeAds": 1,
-        "website": "https://www.amazon.in/dp/B0F7XSGCGF?ref_=pfb_spv01_5bc232656d02b7a130fc8e8746c44e99",
-        "websiteState": "found",
-        "pageUrl": "https://www.facebook.com/amazonhomeindia/",
+        "website": "not_found",
+        "websiteState": "not_found",
+        "pageUrl": "https://www.facebook.com/FairwayFurniture/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.45,
-        "confidence": "MEDIUM"
+        "relevanceScore": 0.62,
+        "confidence": "HIGH"
       },
       {
         "name": "Raymour & Flanigan Furniture and Mattresses",
@@ -350,19 +350,19 @@
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
         "relevanceScore": 0.57,
-        "confidence": "MEDIUM"
+        "confidence": "HIGH"
       }
     ]
   },
   {
     "test": "Live 500",
     "requested": 500,
-    "final": 6,
+    "final": 5,
     "rawAds": 29,
-    "relevant": 6,
-    "irrelevant": 13,
-    "uncertain": 2,
-    "duplicates": 8,
+    "relevant": 5,
+    "irrelevant": 14,
+    "uncertain": 6,
+    "duplicates": 4,
     "stopReason": "SOURCE_EXHAUSTED",
     "status": "PARTIAL",
     "elapsed": "10.0s",
@@ -370,13 +370,13 @@
     "leadsSample": [
       {
         "name": "RFL Furniture",
-        "activeAds": 4,
+        "activeAds": 5,
         "website": "https://othoba.com/get-rfl-classic-chair-at-the-best-price",
         "websiteState": "found",
         "pageUrl": "https://www.facebook.com/RFLfurniture/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 1,
+        "relevanceScore": 0.94,
         "confidence": "HIGH"
       },
       {
@@ -398,7 +398,18 @@
         "pageUrl": "https://www.facebook.com/HospitalityFurnitureConceptsAU/",
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.9,
+        "relevanceScore": 0.85,
+        "confidence": "HIGH"
+      },
+      {
+        "name": "Fairway Furniture",
+        "activeAds": 1,
+        "website": "not_found",
+        "websiteState": "not_found",
+        "pageUrl": "https://www.facebook.com/FairwayFurniture/",
+        "pageState": "found",
+        "relevanceDecision": "RELEVANT",
+        "relevanceScore": 0.62,
         "confidence": "HIGH"
       },
       {
@@ -410,18 +421,7 @@
         "pageState": "found",
         "relevanceDecision": "RELEVANT",
         "relevanceScore": 0.57,
-        "confidence": "MEDIUM"
-      },
-      {
-        "name": "Strawberry - Lifestyle & Fashion",
-        "activeAds": 1,
-        "website": "https://www.hometalk.com/dcg/How to decorate your home with easy payments/?source=facebook&lang=en&adtext=Learn more about sofas and furniture on installments&theme=dark_mode&cid=3103991662&sid=4388678308&adid={{ad.id}}&terms=Sofas with Zero Upfront Payment Free Delivery,Pay Monthly Sofas with no Credit Check no Deposit,Sofa on Finance Bad Credit no Deposit {country} no Upfront Cost,{country}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,{city}: Sofa on Finance Bad Credit no Deposit no Upfront Cost,Sofa Pay Monthly no Credit Check",
-        "websiteState": "found",
-        "pageUrl": "https://www.facebook.com/61552620205087/",
-        "pageState": "found",
-        "relevanceDecision": "RELEVANT",
-        "relevanceScore": 0.47,
-        "confidence": "MEDIUM"
+        "confidence": "HIGH"
       }
     ]
   }

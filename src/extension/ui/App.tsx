@@ -15,7 +15,6 @@ import {
   FileCode,
   Trash2,
   RefreshCw,
-  Sliders,
   Layers
 } from 'lucide-react';
 import { RESEARCH_PRESETS } from '../../data/presetCatalogue.ts';
@@ -34,7 +33,6 @@ export const ExtensionApp: React.FC = () => {
   const [presetId, setPresetId] = useState<string>(RESEARCH_PRESETS[0]?.preset_id || '');
   const [keywordsInput, setKeywordsInput] = useState<string>('Furniture, Home Decor');
   const [countryCode, setCountryCode] = useState<string>('BD');
-  const [maxResults, setMaxResults] = useState<number>(10);
   const [customSearchName, setCustomSearchName] = useState<string>('');
 
   const [activeRun, setActiveRun] = useState<ExtensionResearchRun | null>(null);
@@ -42,6 +40,8 @@ export const ExtensionApp: React.FC = () => {
   const [selectedLead, setSelectedLead] = useState<ExtensionLead | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const LEADS_PER_PAGE = 50;
 
   // Poll or sync state with chrome.storage.local on mount
   useEffect(() => {
@@ -133,12 +133,12 @@ export const ExtensionApp: React.FC = () => {
 
     const payload: StartResearchPayload = {
       mode: researchMode,
+      researchMode: 'AUTO_DISCOVERY',
       presetId: researchMode === 'PRESET' ? presetId : undefined,
       presetName,
       keywords: parsedKeywords,
       countryCode,
       locationName,
-      maxResults: Number(maxResults) || 10,
       researchName: customSearchName.trim() || `${researchMode === 'PRESET' ? presetName : parsedKeywords[0]} in ${locationName}`
     };
 
@@ -195,15 +195,62 @@ export const ExtensionApp: React.FC = () => {
 
   const handleExportCsv = (leads: ExtensionLead[], run?: ExtensionResearchRun) => {
     if (!leads || leads.length === 0) return;
+    if (run?.runId && typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({
+        type: 'GET_ALL_LEADS_FOR_EXPORT',
+        payload: { runId: run.runId }
+      }, (res) => {
+        const exportLeads = (res && res.success && Array.isArray(res.leads) && res.leads.length > 0) ? res.leads : leads;
+        const csvData = exportLeadsToCsv(exportLeads, run);
+        const fileName = `leadnoria_leads_${run.runId}.csv`;
+        downloadFile(csvData, fileName, 'text/csv;charset=utf-8;');
+      });
+      return;
+    }
     const csvData = exportLeadsToCsv(leads, run);
-    const fileName = `meta_ad_library_leads_${run ? run.runId : Date.now()}.csv`;
+    const fileName = `leadnoria_leads_${run ? run.runId : Date.now()}.csv`;
     downloadFile(csvData, fileName, 'text/csv;charset=utf-8;');
   };
 
   const handleExportJson = (run: ExtensionResearchRun) => {
+    if (run?.runId && typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({
+        type: 'GET_ALL_LEADS_FOR_EXPORT',
+        payload: { runId: run.runId }
+      }, (res) => {
+        const fullRun = { ...run };
+        if (res && res.success && Array.isArray(res.leads) && res.leads.length > 0) {
+          fullRun.leads = res.leads;
+        }
+        const jsonData = JSON.stringify(fullRun, null, 2);
+        const fileName = `leadnoria_run_${run.runId}.json`;
+        downloadFile(jsonData, fileName, 'application/json;charset=utf-8;');
+      });
+      return;
+    }
     const jsonData = JSON.stringify(run, null, 2);
-    const fileName = `meta_ad_library_run_${run.runId}.json`;
+    const fileName = `leadnoria_run_${run.runId}.json`;
     downloadFile(jsonData, fileName, 'application/json;charset=utf-8;');
+  };
+
+  const handleResumeResearch = () => {
+    if (!activeRun) return;
+    setIsSubmitting(true);
+    setStatusMessage('Resuming research from frontier checkpoint...');
+    if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({
+        type: 'RESUME_RESEARCH',
+        payload: { runId: activeRun.runId }
+      }, (res) => {
+        if (res && res.run) {
+          setActiveRun(res.run);
+          setActiveTab('RESULTS');
+        } else if (res && !res.success) {
+          setStatusMessage(`Failed to resume research: ${res.error}`);
+          setIsSubmitting(false);
+        }
+      });
+    }
   };
 
   const isRunning = activeRun && (activeRun.status === 'STARTING' || activeRun.status === 'NAVIGATING' || activeRun.status === 'COLLECTING' || activeRun.status === 'NORMALIZING');
@@ -232,7 +279,7 @@ export const ExtensionApp: React.FC = () => {
   const formatStopReason = (reason?: string): string => {
     if (!reason) return '';
     switch (reason) {
-      case 'TARGET_REACHED': return 'Target Quota Reached';
+      case 'SAFETY_LIMIT_REACHED': return 'System Safety Limit Reached (5,000 Leads)';
       case 'SOURCE_EXHAUSTED':
       case 'SOURCE_EXHAUSTED_VERIFIED': return 'Search Results Exhausted';
       case 'SOURCE_PROGRESS_STALLED': return 'Ad Library Stalled — No New Ads Observed';
@@ -266,14 +313,34 @@ export const ExtensionApp: React.FC = () => {
       {/* Top Header */}
       <header className="flex items-center justify-between px-3 py-2.5 bg-slate-950 border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm">
-            N
+          <div className="w-5 h-5 rounded bg-slate-900 border border-slate-800 flex items-center justify-center shadow-sm overflow-hidden flex-shrink-0">
+            <svg width="18" height="18" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="100" height="100" rx="22" fill="#0F172A" />
+              <circle cx="50" cy="50" r="38" stroke="#334155" strokeWidth="2.5" strokeDasharray="4 4" opacity="0.7" />
+              <path
+                d="M 30 72 L 30 28 C 30 25 34 24 36 27 L 64 73 C 66 76 70 75 70 72 L 70 28"
+                stroke="url(#hdr-noria-flow)"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="30" cy="72" r="5" fill="#A78BFA" />
+              <circle cx="50" cy="50" r="4" fill="#F8FAFC" />
+              <circle cx="70" cy="28" r="5" fill="#8B5CF6" />
+              <defs>
+                <linearGradient id="hdr-noria-flow" x1="28" y1="72" x2="72" y2="28" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#7C3AED" />
+                  <stop offset="50%" stopColor="#A78BFA" />
+                  <stop offset="100%" stopColor="#F8FAFC" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
           <div>
-            <h1 className="text-xs font-semibold tracking-tight text-white flex items-center gap-1.5">
-              Meta Ad Library Lead Scraper
-              <span className="px-1.5 py-0.2 text-[9px] font-mono bg-blue-900/60 text-blue-300 border border-blue-700/50 rounded">
-                MV3 Local
+            <h1 className="text-xs font-semibold tracking-tight text-white flex items-center gap-1.5" aria-label="LeadNoria">
+              <span className="font-bold text-white tracking-tight">LeadNoria</span>
+              <span className="px-1.5 py-0.2 text-[9px] font-mono bg-purple-950/80 text-purple-300 border border-purple-700/50 rounded">
+                Lead Research
               </span>
             </h1>
           </div>
@@ -282,7 +349,7 @@ export const ExtensionApp: React.FC = () => {
         {isRunning && (
           <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-950/80 border border-emerald-700/50 rounded text-emerald-300 text-[10px] animate-pulse">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            Scraping Active
+            Research Active
           </div>
         )}
       </header>
@@ -445,40 +512,28 @@ export const ExtensionApp: React.FC = () => {
               )}
             </div>
 
-            {/* Location & Limit */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="p-2.5 bg-slate-800/50 border border-slate-700/60 rounded-lg space-y-1">
-                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1">
+            {/* Search Location */}
+            <div className="p-2.5 bg-slate-800/50 border border-slate-700/60 rounded-lg space-y-1">
+              <label className="text-[11px] font-semibold text-slate-300 flex items-center justify-between">
+                <span className="flex items-center gap-1">
                   <Globe className="w-3 h-3 text-blue-400" />
                   Search Location
-                </label>
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 text-xs focus:outline-none focus:border-blue-500"
-                >
-                  {META_AD_LIBRARY_LOCATIONS.map((loc) => (
-                    <option key={loc.locationCode} value={loc.locationCode}>
-                      {loc.displayName} ({loc.locationCode})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="p-2.5 bg-slate-800/50 border border-slate-700/60 rounded-lg space-y-1">
-                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1">
-                  <Sliders className="w-3 h-3 text-blue-400" />
-                  Maximum Leads
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={500}
-                  value={maxResults}
-                  onChange={(e) => setMaxResults(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 text-xs focus:outline-none focus:border-blue-500"
-                />
-              </div>
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">
+                  Auto-Discovery
+                </span>
+              </label>
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 text-xs focus:outline-none focus:border-blue-500"
+              >
+                {META_AD_LIBRARY_LOCATIONS.map((loc) => (
+                  <option key={loc.locationCode} value={loc.locationCode}>
+                    {loc.displayName} ({loc.locationCode})
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Start Action */}
@@ -536,7 +591,7 @@ export const ExtensionApp: React.FC = () => {
                     <div className="p-1.5 bg-slate-900 rounded border border-slate-800">
                       <div className="text-[9px] text-slate-400">Unique Leads</div>
                       <div className="text-sm font-bold text-emerald-400">
-                        {activeRun.leads.length} <span className="text-[10px] text-slate-500 font-normal">/ {activeRun.maxResults}</span>
+                        {activeRun.counters?.finalUniqueRelevantLeads ?? activeRun.counters?.finalUniqueLeads ?? activeRun.leads.length}
                       </div>
                     </div>
                     <div className="p-1.5 bg-slate-900 rounded border border-slate-800">
@@ -544,8 +599,8 @@ export const ExtensionApp: React.FC = () => {
                       <div className="text-sm font-bold text-blue-400">{activeRun.totalAdsInspected}</div>
                     </div>
                     <div className="p-1.5 bg-slate-900 rounded border border-slate-800">
-                      <div className="text-[9px] text-slate-400">Target Quota</div>
-                      <div className="text-sm font-bold text-slate-300">{activeRun.maxResults}</div>
+                      <div className="text-[9px] text-slate-400">Discovery Mode</div>
+                      <div className="text-sm font-bold text-purple-300">Auto</div>
                     </div>
                   </div>
 
@@ -561,21 +616,32 @@ export const ExtensionApp: React.FC = () => {
                         Stop Research
                       </button>
                     ) : (
-                      <div className="text-[10px] text-slate-400">
-                        {activeRun.stopReason ? (
-                          <span className="text-slate-300 font-medium">({formatStopReason(activeRun.stopReason)})</span>
-                        ) : activeRun.leads.length >= activeRun.maxResults ? (
-                          '✓ Target quota reached'
-                        ) : (
-                          'Research stopped'
+                      <div className="flex items-center gap-1.5">
+                        {['PARTIAL', 'BROWSER_TAB_CLOSED', 'BROWSER_INTERRUPTED', 'RECOVERY_REQUIRED'].includes(activeRun.status) && (
+                          <button
+                            type="button"
+                            onClick={handleResumeResearch}
+                            className="px-2 py-1 bg-purple-900/70 hover:bg-purple-800 border border-purple-700 text-purple-200 rounded text-[10px] font-medium flex items-center gap-1"
+                            title="Resume research from last checkpoint"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            Resume
+                          </button>
                         )}
+                        <div className="text-[10px] text-slate-400">
+                          {activeRun.stopReason ? (
+                            <span className="text-slate-300 font-medium">({formatStopReason(activeRun.stopReason)})</span>
+                          ) : (
+                            'Research completed'
+                          )}
+                        </div>
                       </div>
                     )}
 
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        disabled={activeRun.leads.length === 0}
+                        disabled={activeRun.leads.length === 0 && !(activeRun.counters?.finalUniqueRelevantLeads || activeRun.counters?.finalUniqueLeads)}
                         onClick={() => handleExportCsv(activeRun.leads, activeRun)}
                         className="px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 rounded text-[10px] flex items-center gap-1"
                         title="Export RFC-4180 CSV with Formula Injection Protection"
@@ -599,7 +665,14 @@ export const ExtensionApp: React.FC = () => {
                 {/* Leads List */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-slate-300 px-1">
-                    <span>Relevant Leads ({activeRun.leads.length})</span>
+                    <span>
+                      Relevant Leads ({activeRun.counters?.finalUniqueRelevantLeads ?? activeRun.counters?.finalUniqueLeads ?? activeRun.leads.length})
+                      {(activeRun.counters?.finalUniqueRelevantLeads ?? activeRun.counters?.finalUniqueLeads ?? activeRun.leads.length) > activeRun.leads.length && (
+                        <span className="text-[9px] text-slate-400 font-normal ml-1">
+                          (showing top {activeRun.leads.length} preview)
+                        </span>
+                      )}
+                    </span>
                     <span className="text-[9px] text-slate-400 font-normal">
                       {activeRun.rejectedLeadsCount ? `${activeRun.rejectedLeadsCount} irrelevant excluded` : 'Click lead to inspect'}
                     </span>
@@ -610,7 +683,8 @@ export const ExtensionApp: React.FC = () => {
                       {isRunning ? 'Actively extracting ad cards from Meta Ad Library...' : 'No leads found yet. Start research above.'}
                     </div>
                   ) : (
-                    activeRun.leads.map((lead) => (
+                    <>
+                      {activeRun.leads.slice((currentPage - 1) * LEADS_PER_PAGE, currentPage * LEADS_PER_PAGE).map((lead) => (
                       <div
                         key={lead.id}
                         onClick={() => setSelectedLead(lead)}
@@ -677,7 +751,38 @@ export const ExtensionApp: React.FC = () => {
                           )}
                         </div>
                       </div>
-                    ))
+                    ))}
+
+                    {/* Pagination Controls when leads > LEADS_PER_PAGE */}
+                    {activeRun.leads.length > LEADS_PER_PAGE && (
+                      <div className="flex items-center justify-between pt-2 px-1 text-[11px] text-slate-400">
+                        <span>
+                          Showing {(currentPage - 1) * LEADS_PER_PAGE + 1}–{Math.min(currentPage * LEADS_PER_PAGE, activeRun.leads.length)} of {activeRun.leads.length}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 border border-slate-700 rounded text-slate-200"
+                          >
+                            Prev
+                          </button>
+                          <span className="px-1 text-slate-300 font-medium">
+                            {currentPage} / {Math.ceil(activeRun.leads.length / LEADS_PER_PAGE)}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={currentPage >= Math.ceil(activeRun.leads.length / LEADS_PER_PAGE)}
+                            onClick={() => setCurrentPage(p => Math.min(Math.ceil(activeRun.leads.length / LEADS_PER_PAGE), p + 1))}
+                            className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:hover:bg-slate-800 border border-slate-700 rounded text-slate-200"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                   )}
                 </div>
 
@@ -822,11 +927,12 @@ export const ExtensionApp: React.FC = () => {
             ) : (
               <div className="p-6 bg-slate-800/30 border border-dashed border-slate-700 rounded-lg text-center space-y-2">
                 <Search className="w-6 h-6 text-slate-500 mx-auto" />
-                <div className="text-slate-400 text-xs">No active research session.</div>
+                <div className="text-slate-300 font-medium text-xs">Discover your first set of business leads.</div>
+                <div className="text-slate-500 text-[10px]">LeadNoria • Discover. Verify. Connect.</div>
                 <button
                   type="button"
                   onClick={() => setActiveTab('RESEARCH')}
-                  className="px-3 py-1 bg-blue-600 text-white rounded text-[11px]"
+                  className="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-[11px] mt-1 transition-colors"
                 >
                   Configure Research
                 </button>
@@ -876,7 +982,9 @@ export const ExtensionApp: React.FC = () => {
                   </div>
 
                   <div className="text-[10px] text-slate-400 flex items-center justify-between">
-                    <span>{run.locationName} • {run.leads.length} of {run.targetLeadCount || run.maxResults} leads</span>
+                    <span>
+                      {run.locationName} • {run.leads.length} unique leads
+                    </span>
                     <span>{new Date(run.startedAt).toLocaleDateString()}</span>
                   </div>
 

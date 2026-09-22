@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Meta Ad Library Lead Scraper",
+  "name": "LeadNoria",
+  "short_name": "LeadNoria",
   "version": "1.0.0",
-  "description": "Local standalone Meta Ad Library scraper Chrome extension for public lead research.",
+  "description": "A browser-based business lead research extension.",
   "permissions": [
     "storage",
     "tabs",
@@ -21,7 +22,7 @@
     "default_path": "sidepanel.html"
   },
   "action": {
-    "default_title": "Open Lead Scraper",
+    "default_title": "Open LeadNoria",
     "default_popup": "popup.html"
   },
   "content_scripts": [

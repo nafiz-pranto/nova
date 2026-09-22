@@ -3,6 +3,7 @@
  * Operates safely inside Content Scripts and local browser automation contexts.
  */
 
+import { MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH } from './types.ts';
 import type { ScrapedAdCandidate, ExtensionLead, ExtensionResearchRun } from './types.ts';
 import { LeadRelevanceEngine } from './relevanceEngine.ts';
 import type { ResearchIntent } from './relevanceEngine.ts';
@@ -319,7 +320,7 @@ export function aggregateCandidatesToLeads(
   candidates: ScrapedAdCandidate[],
   locationCode: string,
   locationName: string,
-  maxResults: number,
+  maxResults: number = MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH,
   existingLeads: ExtensionLead[] = [],
   intent?: ResearchIntent
 ): {
@@ -339,6 +340,10 @@ export function aggregateCandidatesToLeads(
     reasonCodes: Record<string, number>;
   };
 } {
+  const effectiveCeiling = typeof maxResults === 'number' && maxResults > 0
+    ? Math.min(maxResults, MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH)
+    : MAX_FINAL_UNIQUE_RELEVANT_LEADS_PER_RESEARCH;
+
   // Group all candidates by normalized advertiser name
   const candidateGroups = new Map<string, ScrapedAdCandidate[]>();
   let totalAdsCount = 0;
@@ -430,8 +435,8 @@ export function aggregateCandidatesToLeads(
         existing.presetVersion = evalResult.presetVersion;
       }
     } else {
-      if (leadMap.size >= maxResults) {
-        // Quota reached for unique relevant leads
+      if (leadMap.size >= effectiveCeiling) {
+        // System ceiling reached for unique relevant leads
         continue;
       }
 
@@ -528,9 +533,16 @@ export function sanitizeCsvField(val: unknown): string {
  * Generates RFC-compliant and formula-safe CSV from leads
  */
 export function exportLeadsToCsv(leads: ExtensionLead[], run?: ExtensionResearchRun): string {
-  const metaHeader = run
-    ? `# Research Run: ${run.researchName} | Mode: ${run.mode} | Requested Quota: ${run.targetLeadCount} | Final Relevant Leads: ${run.leads.length} | Status: ${run.status} | Stop Reason: ${run.stopReason || 'N/A'} | Engine Version: ${run.engineVersion || 'strict-v2'}\r\n`
-    : '';
+  let metaHeader = '';
+  if (run) {
+    const isAutoDiscovery = run.researchMode === 'AUTO_DISCOVERY' || run.targetLeadCount === undefined;
+    const finalCount = run.leads ? run.leads.length : leads.length;
+    if (isAutoDiscovery) {
+      metaHeader = `# Research Run: ${run.researchName} | Mode: Auto Discovery (${run.mode}) | Source: Meta Ad Library | Keywords: ${(run.keywords || []).join('; ')} | Location: ${run.locationName} | Final Relevant Leads: ${finalCount} | Status: ${run.status} | Stop Reason: ${run.stopReason || 'N/A'} | Engine Version: ${run.engineVersion || 'strict-v2'}\r\n`;
+    } else {
+      metaHeader = `# Research Run: ${run.researchName} | Mode: ${run.mode} | Requested Quota: ${run.targetLeadCount} | Final Relevant Leads: ${finalCount} | Status: ${run.status} | Stop Reason: ${run.stopReason || 'N/A'} | Engine Version: ${run.engineVersion || 'strict-v2'}\r\n`;
+    }
+  }
 
   const headers = [
     'Lead Name',
@@ -567,10 +579,10 @@ export function exportLeadsToCsv(leads: ExtensionLead[], run?: ExtensionResearch
     sanitizeCsvField(l.destinationUrl || ''),
     sanitizeCsvField(l.websiteState),
     sanitizeCsvField(l.activeAdCount),
-    sanitizeCsvField(l.matchedKeywords.join('; ')),
-    sanitizeCsvField(l.locationCode),
-    sanitizeCsvField(l.locationName),
-    sanitizeCsvField(l.adLibraryIds.join('; ')),
+    sanitizeCsvField((l.matchedKeywords || []).join('; ')),
+    sanitizeCsvField(l.locationCode || ''),
+    sanitizeCsvField(l.locationName || ''),
+    sanitizeCsvField((l.adLibraryIds || []).join('; ')),
     sanitizeCsvField(l.adLibraryUrl || ''),
     sanitizeCsvField(l.relevanceDecision || 'RELEVANT'),
     sanitizeCsvField(l.relevanceScore !== undefined ? `${(l.relevanceScore * 100).toFixed(0)}%` : '100%'),
